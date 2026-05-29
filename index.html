@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>💍 Hochzeitsplaner 2027</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--cream:#fdf6ee;--rose:#c8896a;--rose-light:#f0d5c8;--rose-dark:#a06848;--green:#7a9e7e;--green-light:#d4e8d6;--brown:#6b4f3a;--brown-light:#e8ddd5;--gold:#c9a84c;--gold-light:#f5ecd0;--text:#3d2b1f;--text-light:#7a6055;--shadow:0 4px 20px rgba(107,79,58,0.10);--radius:16px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
+.header{background:linear-gradient(135deg,var(--brown) 0%,var(--rose-dark) 100%);color:white;padding:28px 40px 20px;text-align:center;position:relative;overflow:hidden;}
+.header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+.header h1{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;letter-spacing:1px;position:relative;}
+.header-sub{font-size:0.88rem;opacity:0.85;margin-top:4px;position:relative;font-weight:300;letter-spacing:2px;text-transform:uppercase;}
+.header-date-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;position:relative;flex-wrap:wrap;}
+.header-date-row label{font-size:0.8rem;opacity:0.85;letter-spacing:1px;text-transform:uppercase;}
+.header-date-row input[type="date"]{background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);border-radius:8px;color:white;padding:5px 10px;font-size:0.9rem;font-family:'Lato',sans-serif;cursor:pointer;}
+.header-date-row input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);}
+.countdown-bar{display:flex;gap:16px;justify-content:center;margin-top:14px;flex-wrap:wrap;position:relative;}
+.countdown-item{background:rgba(255,255,255,0.15);border-radius:12px;padding:8px 16px;text-align:center;backdrop-filter:blur(4px);}
+.countdown-item .num{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;line-height:1;}
+.countdown-item .lbl{font-size:0.68rem;text-transform:uppercase;letter-spacing:2px;opacity:0.8;}
+.tabs{display:flex;gap:0;background:var(--brown-light);border-bottom:2px solid var(--rose-light);overflow-x:auto;padding:0 20px;}
+.tab-btn{padding:13px 20px;border:none;background:none;cursor:pointer;font-family:'Lato',sans-serif;font-size:0.85rem;font-weight:600;color:var(--text-light);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all 0.2s;white-space:nowrap;letter-spacing:0.5px;}
+.tab-btn:hover{color:var(--rose-dark);}
+.tab-btn.active{color:var(--rose-dark);border-bottom-color:var(--rose-dark);background:var(--cream);}
+.main{padding:24px 20px;max-width:1200px;margin:0 auto;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.card{background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;margin-bottom:18px;border:1px solid var(--rose-light);}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-family:'Lato',sans-serif;font-size:0.83rem;font-weight:600;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--rose);color:white;}
+.btn-primary:hover{background:var(--rose-dark);}
+.btn-secondary{background:var(--brown-light);color:var(--brown);}
+.btn-secondary:hover{background:var(--rose-light);}
+.btn-danger{background:#ffe5e5;color:#c0392b;}
+.btn-danger:hover{background:#ffc5c5;}
+.btn-sm{padding:4px 10px;font-size:0.76rem;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+th{background:var(--brown-light);color:var(--brown);text-align:left;padding:9px 11px;font-weight:600;letter-spacing:0.3px;}
+td{padding:8px 11px;border-bottom:1px solid var(--rose-light);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--cream);}
+input[type="text"],input[type="number"],input[type="date"],input[type="email"],input[type="tel"],select,textarea{border:1.5px solid var(--rose-light);border-radius:8px;padding:6px 9px;font-family:'Lato',sans-serif;font-size:0.83rem;color:var(--text);background:var(--cream);width:100%;transition:border 0.2s;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);background:white;}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:0.73rem;font-weight:600;}
+.badge-green{background:var(--green-light);color:#2d6a31;}
+.badge-yellow{background:#fff3cd;color:#856404;}
+.badge-red{background:#ffe5e5;color:#c0392b;}
+.badge-blue{background:#dbeafe;color:#1e40af;}
+.badge-grey{background:#f3f4f6;color:#6b7280;}
+.badge-purple{background:#ede9fe;color:#5b21b6;}
+.badge-orange{background:#ffedd5;color:#9a3412;}
+.budget-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:18px;}
+.budget-box{border-radius:12px;padding:16px;text-align:center;}
+.budget-box .amount{font-family:'Playfair Display',serif;font-size:1.45rem;font-weight:700;}
+.budget-box .label{font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;margin-top:4px;opacity:0.8;}
+.box-total{background:var(--gold-light);color:var(--brown);border:1px solid var(--gold);}
+.box-plan{background:#e0e7ff;color:#3730a3;border:1px solid #a5b4fc;}
+.box-spent{background:var(--rose-light);color:var(--rose-dark);border:1px solid var(--rose);}
+.box-remain{background:var(--green-light);color:#2d6a31;border:1px solid var(--green);}
+.progress-wrap{margin:8px 0 4px;}
+.progress-bar-bg{background:var(--rose-light);border-radius:10px;height:10px;width:100%;overflow:hidden;}
+.progress-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--rose),var(--rose-dark));transition:width 0.4s;}
+.milestone-grid{display:flex;flex-direction:column;gap:9px;}
+.milestone-item{display:flex;align-items:center;gap:13px;padding:11px 15px;border-radius:10px;border:1px solid var(--rose-light);background:white;}
+.milestone-item.done{background:var(--green-light);border-color:var(--green);opacity:0.85;}
+.milestone-item.urgent{border-color:#f59e0b;background:#fffbeb;}
+.milestone-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--rose);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:0.9rem;}
+.milestone-item.done .milestone-check{background:var(--green);border-color:var(--green);color:white;}
+.milestone-content{flex:1;}
+.milestone-title{font-weight:600;font-size:0.88rem;}
+.milestone-title.done-text{text-decoration:line-through;color:var(--text-light);}
+.milestone-date{font-size:0.76rem;color:var(--text-light);margin-top:2px;}
+.stars{display:flex;gap:3px;}
+.star{font-size:1.1rem;cursor:pointer;transition:transform 0.1s;}
+.star:hover{transform:scale(1.2);}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:white;border-radius:var(--radius);padding:26px;width:92%;max-width:540px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto;}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--brown);margin-bottom:16px;}
+.form-row{margin-bottom:13px;}
+.form-label{font-size:0.8rem;font-weight:600;color:var(--text-light);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:0.5px;}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:13px;}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;margin-bottom:13px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
+.timeline{position:relative;padding-left:28px;}
+.timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--rose-light);}
+.timeline-item{position:relative;margin-bottom:11px;}
+.timeline-dot{position:absolute;left:-24px;top:8px;width:13px;height:13px;border-radius:50%;background:var(--rose);border:2px solid white;box-shadow:0 0 0 2px var(--rose);}
+.timeline-card{background:white;border:1px solid var(--rose-light);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:12px;}
+.timeline-time{font-weight:700;color:var(--rose-dark);min-width:50px;font-size:0.88rem;}
+.timeline-text{flex:1;font-size:0.86rem;}
+.timeline-note{font-size:0.76rem;color:var(--text-light);margin-top:2px;}
+.tip-box{background:var(--gold-light);border:1px solid var(--gold);border-radius:10px;padding:11px 15px;font-size:0.83rem;color:var(--brown);margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.section-title{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--brown);}
+.empty-state{text-align:center;padding:28px;color:var(--text-light);font-size:0.88rem;}
+/* MENU ITEMS in Gast Modal */
+.menu-item-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px;align-items:center;}
+.menu-item-row select{flex:1;}
+.menu-item-row input[type="number"]{width:70px;}
+/* TISCHPLAN */
+#tischplan-canvas{border:2px solid var(--rose-light);border-radius:12px;background:#f9f5f0;cursor:crosshair;display:block;max-width:100%;}
+.tischplan-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.tool-btn{padding:7px 14px;border-radius:8px;border:2px solid transparent;cursor:pointer;font-family:'Lato',sans-serif;font-size:0.82rem;font-weight:600;transition:all 0.2s;background:var(--brown-light);color:var(--brown);}
+.tool-btn.active{border-color:var(--rose-dark);background:var(--rose-light);color:var(--rose-dark);}
+.tool-btn:hover{background:var(--rose-light);}
+.tisch-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:0.8rem;color:var(--text-light);margin-top:8px;}
+.legend-item{display:flex;align-items:center;gap:5px;}
+.legend-dot{width:14px;height:14px;border-radius:3px;}
+/* PIE CHART */
+.pie-wrap{display:flex;align-items:center;gap:28px;flex-wrap:wrap;justify-content:center;}
+.pie-legend{display:flex;flex-direction:column;gap:8px;}
+.pie-legend-item{display:flex;align-items:center;gap:8px;font-size:0.83rem;}
+.pie-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>💍 Unser Hochzeitsplaner</h1>
+  <div class="header-date-row">
+    <label>📅 Hochzeitsdatum:</label>
+    <input type="date" id="wedding-date" value="2027-07-15" onchange="onDateChange()"/>
+    <span style="opacity:0.85;font-size:0.85rem;" id="date-display">15. Juli 2027</span>
+  </div>
+  <div class="header-sub">Rustikal & Elegant &nbsp;·&nbsp; ~120 Gäste</div>
+  <div class="countdown-bar" id="countdown"></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('countdown',this)">📅 Meilensteine</button>
+  <button class="tab-btn" onclick="showTab('budget',this)">💰 Budget</button>
+  <button class="tab-btn" onclick="showTab('gaeste',this)">👥 Gästeliste</button>
+  <button class="tab-btn" onclick="showTab('dienstleister',this)">🤝 Dienstleister</button>
+  <button class="tab-btn" onclick="showTab('location',this)">📍 Locations</button>
+  <button class="tab-btn" onclick="showTab('tagesablauf',this)">🕐 Tagesablauf</button>
+  <button class="tab-btn" onclick="showTab('tischplan',this)">🪑 Tischplan</button>
+</div>
+
+<div class="main">
+
+<!-- ===== MEILENSTEINE ===== -->
+<div class="tab-panel active" id="tab-countdown">
+  <div class="tip-box">💡 <span>Klicke auf den Kreis zum Abhaken. Jederzeit neue Meilensteine hinzufügen oder löschen.</span></div>
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">🗓️ Hochzeits-Meilensteine</div>
+      <button class="btn btn-primary" onclick="openModal('modal-milestone')">+ Meilenstein hinzufügen</button>
+    </div>
+    <div class="milestone-grid" id="milestone-list"></div>
+  </div>
+</div>
+
+<!-- ===== BUDGET ===== -->
+<div class="tab-panel" id="tab-budget">
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">💰 Budget-Übersicht</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:0.85rem;font-weight:600;color:var(--text-light);">Gesamtbudget:</label>
+        <input type="number" id="total-budget" value="10000" style="width:120px;" onchange="updateBudget()"/> €
+      </div>
+    </div>
+    <div class="budget-summary">
+      <div class="budget-box box-total"><div class="amount" id="b-total">10.000 €</div><div class="label">Gesamtbudget</div></div>
+      <div class="budget-box box-plan"><div class="amount" id="b-plan-total">0 €</div><div class="label">Geplante Kosten</div></div>
+      <div class="budget-box box-spent"><div class="amount" id="b-spent">0 €</div><div class="label">Ausgegeben</div></div>
+      <div class="budget-box box-remain"><div class="amount" id="b-remain">10.000 €</div><div class="label">Verbleibend</div></div>
+    </div>
+    <div class="progress-wrap">
+      <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--text-light);margin-bottom:4px;">
+        <span>Ausgegeben vs. Gesamtbudget</span><span id="b-percent">0%</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="b-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;" class="budget-bottom">
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">📋 Kostenpositionen</div>
+        <button class="btn btn-primary" onclick="openModal('modal-budget')">+ Position</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Kategorie</th><th>Beschreibung</th><th>Geplant</th><th>Bezahlt</th><th>Offen</th><th></th></tr></thead>
+          <tbody id="budget-table"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:16px;">📊 Budget-Verteilung</div>
+      <div class="pie-wrap">
+        <canvas id="pie-canvas" width="200" height="200"></canvas>
+        <div class="pie-legend" id="pie-legend"></div>
+      </div>
+      <div style="text-align:center;font-size:0.78rem;color:var(--text-light);margin-top:10px;">Basiert auf geplanten Kosten pro Kategorie</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GÄSTE ===== -->
+<div class="tab-panel" id="tab-gaeste">
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">👥 Gästeliste</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input type="text" id="gaeste-search" placeholder="🔍 Suchen..." style="width:180px;" oninput="renderGaeste()"/>
+        <button class="btn btn-primary" onclick="openModal('modal-gast')">+ Gast hinzufügen</button>
+      </div>
+    </div>
+    <!-- STATS -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;" id="gaeste-stats"></div>
+    <!-- MENÜ-ÜBERSICHT -->
+    <div id="menu-overview" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Personen</th><th>Einladung</th><th>Zusage</th><th>Hotel</th><th>Menüwünsche</th><th>Notiz</th><th></th></tr></thead>
+        <tbody id="gaeste-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DIENSTLEISTER ===== -->
+<div class="tab-panel" id="tab-dienstleister">
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">🤝 Dienstleister-Tracker</div>
+      <button class="btn btn-primary" onclick="openModal('modal-dienst')">+ Dienstleister hinzufügen</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Kategorie</th><th>Name</th><th>Kontakt</th><th>Preis</th><th>Anzahlung</th><th>Zahlungsstatus</th><th>Vertrag</th><th>Notiz</th><th></th></tr></thead>
+        <tbody id="dienst-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOCATION ===== -->
+<div class="tab-panel" id="tab-location">
+  <div class="tip-box">💡 <span>Locations eintragen, mit ⭐ bewerten und alle Eigenschaften vergleichen.</span></div>
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">📍 Location-Vergleich</div>
+      <button class="btn btn-primary" onclick="openModal('modal-location')">+ Location hinzufügen</button>
+    </div>
+    <div id="location-cards"></div>
+  </div>
+</div>
+
+<!-- ===== TAGESABLAUF ===== -->
+<div class="tab-panel" id="tab-tagesablauf">
+  <div class="tip-box">💡 <span>Baut euren Tagesablauf Schritt für Schritt auf. Sortiert nach Uhrzeit.</span></div>
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">🕐 Ablaufplan Hochzeitstag</div>
+      <button class="btn btn-primary" onclick="openModal('modal-ablauf')">+ Zeitpunkt hinzufügen</button>
+    </div>
+    <div class="timeline" id="ablauf-list"></div>
+  </div>
+</div>
+
+<!-- ===== TISCHPLAN ===== -->
+<div class="tab-panel" id="tab-tischplan">
+  <div class="tip-box">💡 <span>Zeichne den Raum und platziere Tische. Klicke auf einen Tisch, um ihn zu benennen oder zu löschen. Ziehe Tische per Drag & Drop.</span></div>
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">🪑 Interaktiver Tischplan</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="clearCanvas()">🗑️ Alles löschen</button>
+        <button class="btn btn-secondary" onclick="exportPlan()">💾 Als Bild speichern</button>
+      </div>
+    </div>
+    <div class="tischplan-toolbar">
+      <span style="font-size:0.82rem;font-weight:600;color:var(--text-light);">Werkzeug:</span>
+      <button class="tool-btn active" id="tool-round" onclick="setTool('round')">⭕ Runder Tisch</button>
+      <button class="tool-btn" id="tool-rect" onclick="setTool('rect')">⬜ Rechteckiger Tisch</button>
+      <button class="tool-btn" id="tool-wall" onclick="setTool('wall')">🧱 Wand / Raum</button>
+      <button class="tool-btn" id="tool-select" onclick="setTool('select')">🖱️ Auswählen / Verschieben</button>
+      <button class="tool-btn" id="tool-delete" onclick="setTool('delete')">❌ Löschen</button>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:8px;">
+        <label style="font-size:0.78rem;color:var(--text-light);">Farbe:</label>
+        <input type="color" id="table-color" value="#c8896a" style="width:32px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:2px;"/>
+      </div>
+    </div>
+    <canvas id="tischplan-canvas" width="900" height="600"></canvas>
+    <div class="tisch-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#c8896a;border-radius:50%;"></div> Runder Tisch</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#7a9e7e;"></div> Rechteckiger Tisch</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#6b4f3a;border-radius:2px;"></div> Wand / Raum</div>
+    </div>
+    <div style="margin-top:10px;font-size:0.8rem;color:var(--text-light);">
+      💡 Tipp: Mit <b>Auswählen</b> kannst du Tische verschieben und per Doppelklick umbenennen.
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- ====== MODALS ====== -->
+
+<!-- Meilenstein -->
+<div class="modal-bg" id="modal-milestone">
+  <div class="modal">
+    <div class="modal-title">🗓️ Meilenstein hinzufügen</div>
+    <div class="form-row"><label class="form-label">Aufgabe</label><input type="text" id="ms-title" placeholder="z.B. Location buchen"/></div>
+    <div class="form-row-2">
+      <div><label class="form-label">Bis wann?</label><input type="date" id="ms-date"/></div>
+      <div><label class="form-label">Priorität</label><select id="ms-prio"><option value="normal">Normal</option><option value="urgent">Dringend ⚠️</option></select></div>
+    </div>
+    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="ms-note" placeholder="Optional..."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-milestone')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="addMilestone()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Budget -->
+<div class="modal-bg" id="modal-budget">
+  <div class="modal">
+    <div class="modal-title">💰 Kostenposition hinzufügen</div>
+    <div class="form-row"><label class="form-label">Kategorie</label>
+      <select id="b-kat"><option>Location</option><option>Catering</option><option>Outfit (Braut)</option><option>Outfit (Bräutigam)</option><option>Fotograf</option><option>Videograf</option><option>DJ / Musik</option><option>Florist / Deko</option><option>Torte</option><option>Einladungen</option><option>Transport</option><option>Ringe</option><option>Flitterwochen</option><option>Sonstiges</option></select>
+    </div>
+    <div class="form-row"><label class="form-label">Beschreibung</label><input type="text" id="b-desc" placeholder="z.B. Anzahlung Location XY"/></div>
+    <div class="form-row-2">
+      <div><label class="form-label">Geplant (€)</label><input type="number" id="b-plan" placeholder="0"/></div>
+      <div><label class="form-label">Bezahlt (€)</label><input type="number" id="b-paid" placeholder="0"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-budget')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="addBudget()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gast -->
+<div class="modal-bg" id="modal-gast">
+  <div class="modal">
+    <div class="modal-title">👤 Gast / Gruppe hinzufügen</div>
+    <div class="form-row-2">
+      <div><label class="form-label">Name / Gruppe</label><input type="text" id="g-name" placeholder="Fam. Schmidt"/></div>
+      <div><label class="form-label">Anzahl Personen</label><input type="number" id="g-count" value="1" min="1"/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Einladung verschickt?</label><select id="g-invite"><option value="nein">Nein</option><option value="ja">Ja ✓</option></select></div>
+      <div><label class="form-label">Zusage</label><select id="g-rsvp"><option value="ausstehend">Ausstehend</option><option value="zugesagt">Zugesagt ✓</option><option value="abgesagt">Abgesagt ✗</option></select></div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Hotel gebucht?</label>
+      <select id="g-hotel"><option value="nein">Nein</option><option value="ja">Ja ✓</option><option value="nicht nötig">Nicht nötig</option></select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Menüwünsche & Unverträglichkeiten</label>
+      <div id="menu-rows"></div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:6px;" onclick="addMenuRow()">+ Menüoption hinzufügen</button>
+    </div>
+    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="g-note" placeholder="z.B. Allergie, Sonderwunsch..."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-gast')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="addGast()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dienstleister -->
+<div class="modal-bg" id="modal-dienst">
+  <div class="modal">
+    <div class="modal-title">🤝 Dienstleister hinzufügen</div>
+    <div class="form-row-2">
+      <div><label class="form-label">Kategorie</label><select id="d-kat"><option>Fotograf</option><option>Videograf</option><option>DJ</option><option>Band</option><option>Florist</option><option>Catering</option><option>Torte</option><option>Visagistin/Friseur</option><option>Trauredner/in</option><option>Transport/Limousine</option><option>Sonstiges</option></select></div>
+      <div><label class="form-label">Name / Firma</label><input type="text" id="d-name" placeholder="Max Foto GmbH"/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Telefon</label><input type="tel" id="d-tel" placeholder="+49 ..."/></div>
+      <div><label class="form-label">E-Mail</label><input type="email" id="d-email" placeholder="mail@..."/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Gesamtpreis (€)</label><input type="number" id="d-price" placeholder="0"/></div>
+      <div><label class="form-label">Anzahlung (€)</label><input type="number" id="d-deposit" placeholder="0"/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Vertrag</label><select id="d-contract"><option value="ausstehend">Ausstehend</option><option value="unterschrieben">Unterschrieben ✓</option></select></div>
+      <div><label class="form-label">Zahlungsstatus</label><select id="d-status"><option value="offen">Offen</option><option value="anzahlung">Anzahlung bezahlt</option><option value="bezahlt">Vollständig bezahlt ✓</option></select></div>
+    </div>
+    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="d-note" placeholder="z.B. Probetermin am..."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-dienst')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="addDienst()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Location -->
+<div class="modal-bg" id="modal-location">
+  <div class="modal">
+    <div class="modal-title">📍 Location hinzufügen</div>
+    <div class="form-row"><label class="form-label">Name</label><input type="text" id="l-name" placeholder="Schloss Musterhausen"/></div>
+    <div class="form-row"><label class="form-label">Ort / Adresse</label><input type="text" id="l-ort" placeholder="Musterstraße 1, 12345..."/></div>
+    <div class="form-row-2">
+      <div><label class="form-label">Kapazität</label><input type="number" id="l-cap" placeholder="150"/></div>
+      <div><label class="form-label">Mietpreis (€)</label><input type="number" id="l-price" placeholder="3000"/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Übernachtung?</label><select id="l-hotel"><option value="nein">Nein</option><option value="ja">Ja</option></select></div>
+      <div><label class="form-label">Catering inklusive?</label><select id="l-catering"><option value="nein">Nein</option><option value="ja">Ja</option><option value="eigenes möglich">Eigenes möglich</option></select></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Außenbereich?</label><select id="l-outside"><option value="nein">Nein</option><option value="ja">Ja</option></select></div>
+      <div><label class="form-label">Status</label><select id="l-status"><option>Interessant</option><option>Besichtigung geplant</option><option>Besichtigt</option><option>Favorit ⭐</option><option>Abgelehnt</option></select></div>
+    </div>
+    <div class="form-row"><label class="form-label">Website</label><input type="text" id="l-web" placeholder="www.location.de"/></div>
+    <div class="form-row"><label class="form-label">Notizen</label><textarea id="l-note" rows="2" placeholder="Eindrücke, Besonderheiten..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-location')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="addLocation()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ablauf -->
+<div class="modal-bg" id="modal-ablauf">
+  <div class="modal">
+    <div class="modal-title">🕐 Zeitpunkt hinzufügen</div>
+    <div class="form-row-2">
+      <div><label class="form-label">Uhrzeit</label><input type="text" id="a-time" placeholder="14:30"/></div>
+      <div><label class="form-label">Emoji</label><input type="text" id="a-emoji" placeholder="💒"/></div>
+    </div>
+    <div class="form-row"><label class="form-label">Programmpunkt</label><input type="text" id="a-title" placeholder="Trauung beginnt"/></div>
+    <div class="form-row"><label class="form-label">Details</label><input type="text" id="a-note" placeholder="Optional..."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-ablauf')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="addAblauf()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tisch umbenennen -->
+<div class="modal-bg" id="modal-rename">
+  <div class="modal" style="max-width:340px;">
+    <div class="modal-title">✏️ Tisch benennen</div>
+    <div class="form-row"><label class="form-label">Name / Beschriftung</label><input type="text" id="rename-input" placeholder="z.B. Tisch 1 · Familie"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-rename')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="confirmRename()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const MENU_OPTIONS = ['Standard','Vegetarisch 🌿','Vegan 🌱','Glutenfrei','Kinderteller 🧒','Halal','Allergie (Nüsse)','Allergie (Laktose)','Sonstiges'];
+const PIE_COLORS = ['#c8896a','#7a9e7e','#c9a84c','#6b4f3a','#9b59b6','#3498db','#e67e22','#1abc9c','#e74c3c','#95a5a6','#f39c12','#2980b9','#8e44ad','#16a085'];
+
+let state = {
+  weddingDate: '2027-07-15',
+  milestones: [
+    {id:1,title:'Hochzeitsdatum offiziell festlegen',date:'2026-07-01',prio:'urgent',note:'',done:false},
+    {id:2,title:'Budget finalisieren',date:'2026-07-01',prio:'urgent',note:'',done:false},
+    {id:3,title:'Gästeliste erstellen',date:'2026-08-01',prio:'normal',note:'',done:false},
+    {id:4,title:'Locations besichtigen & buchen',date:'2026-09-01',prio:'urgent',note:'',done:false},
+    {id:5,title:'Fotograf buchen',date:'2026-09-01',prio:'urgent',note:'',done:false},
+    {id:6,title:'DJ / Musik buchen',date:'2026-10-01',prio:'normal',note:'',done:false},
+    {id:7,title:'Brautkleid aussuchen',date:'2026-10-01',prio:'urgent',note:'Lange Vorlaufzeit!',done:false},
+    {id:8,title:'Einladungen verschicken',date:'2026-12-01',prio:'normal',note:'',done:false},
+    {id:9,title:'Catering & Menü bestätigen',date:'2027-01-01',prio:'normal',note:'',done:false},
+    {id:10,title:'Florist beauftragen',date:'2027-02-01',prio:'normal',note:'',done:false},
+    {id:11,title:'RSVP einholen',date:'2027-04-01',prio:'normal',note:'',done:false},
+    {id:12,title:'Sitzplan erstellen',date:'2027-05-01',prio:'normal',note:'',done:false},
+    {id:13,title:'Tagesablauf finalisieren',date:'2027-06-01',prio:'normal',note:'',done:false},
+    {id:14,title:'Alle Zahlungen abschließen',date:'2027-07-01',prio:'urgent',note:'',done:false},
+  ],
+  budget: [
+    {id:1,kat:'Location',desc:'Noch offen',plan:3000,paid:0},
+    {id:2,kat:'Catering',desc:'ca. 50€/Person',plan:3000,paid:0},
+    {id:3,kat:'Fotograf',desc:'Noch offen',plan:1500,paid:0},
+    {id:4,kat:'DJ / Musik',desc:'Noch offen',plan:800,paid:0},
+    {id:5,kat:'Florist / Deko',desc:'Noch offen',plan:500,paid:0},
+    {id:6,kat:'Outfit (Braut)',desc:'Brautkleid + Schuhe',plan:1200,paid:0},
+  ],
+  totalBudget: 10000,
+  gaeste: [],
+  dienst: [],
+  locations: [],
+  ablauf: [],
+  tischObjects: [],
+  msC:20, bC:10, gC:1, dC:1, lC:1, aC:1
+};
+
+function save(){try{localStorage.setItem('wp27_v2',JSON.stringify(state));}catch(e){}}
+function load(){try{const s=localStorage.getItem('wp27_v2');if(s){const p=JSON.parse(s);state={...state,...p};}}catch(e){}}
+
+// ============================================================
+// UTILS
+// ============================================================
+function fmt(n){return Number(n).toLocaleString('de-DE')+'  €';}
+function fmtDate(d){if(!d)return '';const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});}
+
+// ============================================================
+// TABS
+// ============================================================
+function showTab(name,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='budget')setTimeout(drawPie,50);
+  if(name==='tischplan')setTimeout(()=>{resizeCanvas();drawCanvas();},50);
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(id){
+  if(id==='modal-gast')initMenuRows();
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-bg').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
+
+// ============================================================
+// DATE / COUNTDOWN
+// ============================================================
+function onDateChange(){
+  state.weddingDate=document.getElementById('wedding-date').value;
+  const dt=new Date(state.weddingDate+'T00:00:00');
+  document.getElementById('date-display').textContent=dt.toLocaleDateString('de-DE',{day:'numeric',month:'long',year:'numeric'});
+  renderCountdown();save();
+}
+function renderCountdown(){
+  const wedding=new Date(state.weddingDate+'T00:00:00');
+  const now=new Date();
+  const diff=wedding-now;
+  const days=Math.max(0,Math.ceil(diff/86400000));
+  const weeks=Math.floor(days/7);
+  const months=Math.floor(days/30);
+  document.getElementById('countdown').innerHTML=`
+    <div class="countdown-item"><div class="num">${days}</div><div class="lbl">Tage</div></div>
+    <div class="countdown-item"><div class="num">${weeks}</div><div class="lbl">Wochen</div></div>
+    <div class="countdown-item"><div class="num">${months}</div><div class="lbl">Monate</div></div>
+    <div class="countdown-item"><div class="num">💍</div><div class="lbl">${new Date(state.weddingDate+'T00:00:00').toLocaleDateString('de-DE',{month:'long',year:'numeric'})}</div></div>
+  `;
+}
+
+// ============================================================
+// MEILENSTEINE
+// ============================================================
+function renderMilestones(){
+  const el=document.getElementById('milestone-list');
+  if(!state.milestones.length){el.innerHTML='<div class="empty-state">Noch keine Meilensteine.</div>';return;}
+  const s=[...state.milestones].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  el.innerHTML=s.map(m=>`
+    <div class="milestone-item ${m.done?'done':''} ${m.prio==='urgent'&&!m.done?'urgent':''}">
+      <div class="milestone-check" onclick="toggleMs(${m.id})">${m.done?'✓':''}</div>
+      <div class="milestone-content">
+        <div class="milestone-title ${m.done?'done-text':''}">${m.prio==='urgent'&&!m.done?'⚠️ ':''}${m.title}</div>
+        <div class="milestone-date">${fmtDate(m.date)}${m.note?' · '+m.note:''}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteMs(${m.id})">✕</button>
+    </div>`).join('');
+}
+function addMilestone(){
+  const t=document.getElementById('ms-title').value.trim();if(!t)return;
+  state.msC++;
+  state.milestones.push({id:state.msC,title:t,date:document.getElementById('ms-date').value,prio:document.getElementById('ms-prio').value,note:document.getElementById('ms-note').value,done:false});
+  ['ms-title','ms-date','ms-note'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-milestone');renderMilestones();save();
+}
+function toggleMs(id){const m=state.milestones.find(x=>x.id===id);if(m){m.done=!m.done;renderMilestones();save();}}
+function deleteMs(id){state.milestones=state.milestones.filter(x=>x.id!==id);renderMilestones();save();}
+
+// ============================================================
+// BUDGET
+// ============================================================
+function updateBudget(){state.totalBudget=parseFloat(document.getElementById('total-budget').value)||0;renderBudget();save();}
+function renderBudget(){
+  const planned=state.budget.reduce((s,b)=>s+(b.plan||0),0);
+  const spent=state.budget.reduce((s,b)=>s+(b.paid||0),0);
+  const total=state.totalBudget;
+  const remain=total-spent;
+  const pct=total>0?Math.min(100,Math.round(spent/total*100)):0;
+  document.getElementById('b-total').textContent=fmt(total);
+  document.getElementById('b-plan-total').textContent=fmt(planned);
+  document.getElementById('b-spent').textContent=fmt(spent);
+  document.getElementById('b-remain').textContent=fmt(Math.max(0,remain));
+  document.getElementById('b-percent').textContent=pct+'%';
+  const bar=document.getElementById('b-bar');
+  bar.style.width=pct+'%';
+  bar.style.background=pct>85?'linear-gradient(90deg,#e74c3c,#c0392b)':'linear-gradient(90deg,var(--rose),var(--rose-dark))';
+  const tbody=document.getElementById('budget-table');
+  if(!state.budget.length){tbody.innerHTML='<tr><td colspan="6" class="empty-state">Noch keine Positionen.</td></tr>';drawPie();return;}
+  tbody.innerHTML=state.budget.map(b=>{
+    const open=(b.plan||0)-(b.paid||0);
+    return `<tr>
+      <td><strong>${b.kat}</strong></td>
+      <td>${b.desc}</td>
+      <td><input type="number" value="${b.plan}" style="width:85px" onchange="updBudget(${b.id},'plan',this.value)"/> €</td>
+      <td><input type="number" value="${b.paid}" style="width:85px" onchange="updBudget(${b.id},'paid',this.value)"/> €</td>
+      <td style="color:${open>0?'var(--rose-dark)':'var(--green)'}"><strong>${fmt(Math.max(0,open))}</strong></td>
+      <td><button class="btn btn-danger btn-sm" onclick="delBudget(${b.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+  drawPie();
+}
+function updBudget(id,f,v){const b=state.budget.find(x=>x.id===id);if(b){b[f]=parseFloat(v)||0;renderBudget();save();}}
+function addBudget(){
+  state.bC++;
+  state.budget.push({id:state.bC,kat:document.getElementById('b-kat').value,desc:document.getElementById('b-desc').value,plan:parseFloat(document.getElementById('b-plan').value)||0,paid:parseFloat(document.getElementById('b-paid').value)||0});
+  ['b-desc','b-plan','b-paid'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-budget');renderBudget();save();
+}
+function delBudget(id){state.budget=state.budget.filter(x=>x.id!==id);renderBudget();save();}
+
+// PIE CHART
+function drawPie(){
+  const canvas=document.getElementById('pie-canvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=200,H=200;
+  ctx.clearRect(0,0,W,H);
+  // group by category
+  const groups={};
+  state.budget.forEach(b=>{if(b.plan>0)groups[b.kat]=(groups[b.kat]||0)+b.plan;});
+  const entries=Object.entries(groups);
+  const total=entries.reduce((s,[,v])=>s+v,0);
+  const legend=document.getElementById('pie-legend');
+  if(!entries.length||total===0){
+    ctx.fillStyle='#e8ddd5';ctx.beginPath();ctx.arc(100,100,80,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#7a6055';ctx.font='12px Lato';ctx.textAlign='center';ctx.fillText('Noch keine Daten',100,105);
+    legend.innerHTML='<div style="font-size:0.78rem;color:var(--text-light);">Füge Kostenpositionen hinzu</div>';
+    return;
+  }
+  let start=0;
+  entries.forEach(([kat,val],i)=>{
+    const slice=(val/total)*Math.PI*2;
+    const color=PIE_COLORS[i%PIE_COLORS.length];
+    ctx.beginPath();ctx.moveTo(100,100);ctx.arc(100,100,88,start,start+slice);ctx.closePath();
+    ctx.fillStyle=color;ctx.fill();
+    ctx.strokeStyle='white';ctx.lineWidth=2;ctx.stroke();
+    start+=slice;
+  });
+  // Center hole
+  ctx.beginPath();ctx.arc(100,100,44,0,Math.PI*2);ctx.fillStyle='white';ctx.fill();
+  ctx.fillStyle='#6b4f3a';ctx.font='bold 13px Playfair Display';ctx.textAlign='center';ctx.fillText(fmt(total),100,102);
+  ctx.font='10px Lato';ctx.fillStyle='#7a6055';ctx.fillText('geplant',100,116);
+  legend.innerHTML=entries.map(([kat,val],i)=>`
+    <div class="pie-legend-item">
+      <div class="pie-dot" style="background:${PIE_COLORS[i%PIE_COLORS.length]}"></div>
+      <span>${kat}: <strong>${fmt(val)}</strong> (${Math.round(val/total*100)}%)</span>
+    </div>`).join('');
+}
+
+// ============================================================
+// GÄSTE
+// ============================================================
+let menuRowCount=0;
+function initMenuRows(){
+  menuRowCount=0;
+  document.getElementById('menu-rows').innerHTML='';
+  addMenuRow();
+}
+function addMenuRow(){
+  menuRowCount++;
+  const id='mr'+menuRowCount;
+  const div=document.createElement('div');
+  div.className='menu-item-row';
+  div.id=id;
+  div.innerHTML=`
+    <select style="flex:1">
+      ${MENU_OPTIONS.map(o=>`<option>${o}</option>`).join('')}
+    </select>
+    <input type="number" value="1" min="1" style="width:65px" placeholder="Anz."/>
+    <button class="btn btn-danger btn-sm" onclick="removeMenuRow('${id}')">✕</button>
+  `;
+  document.getElementById('menu-rows').appendChild(div);
+}
+function removeMenuRow(id){
+  const el=document.getElementById(id);
+  if(el && document.getElementById('menu-rows').children.length>1)el.remove();
+}
+function getMenuRows(){
+  const rows=[];
+  document.querySelectorAll('#menu-rows .menu-item-row').forEach(row=>{
+    const sel=row.querySelector('select');
+    const num=row.querySelector('input[type="number"]');
+    if(sel&&num)rows.push({menu:sel.value,count:parseInt(num.value)||1});
+  });
+  return rows;
+}
+
+function renderGaeste(){
+  const q=(document.getElementById('gaeste-search').value||'').toLowerCase();
+  const list=state.gaeste.filter(g=>(g.name||'').toLowerCase().includes(q));
+  // Stats
+  const total=state.gaeste.reduce((s,g)=>s+(g.count||1),0);
+  const zugesagt=state.gaeste.filter(g=>g.rsvp==='zugesagt').reduce((s,g)=>s+(g.count||1),0);
+  const abgesagt=state.gaeste.filter(g=>g.rsvp==='abgesagt').reduce((s,g)=>s+(g.count||1),0);
+  const ausstehend=state.gaeste.filter(g=>g.rsvp==='ausstehend').reduce((s,g)=>s+(g.count||1),0);
+  document.getElementById('gaeste-stats').innerHTML=`
+    <span class="badge badge-grey">👥 Gesamt: ${total} Personen (${state.gaeste.length} Einträge)</span>
+    <span class="badge badge-green">✓ Zugesagt: ${zugesagt}</span>
+    <span class="badge badge-red">✗ Abgesagt: ${abgesagt}</span>
+    <span class="badge badge-yellow">⏳ Ausstehend: ${ausstehend}</span>
+  `;
+  // Menü-Übersicht
+  const menuTotals={};
+  state.gaeste.forEach(g=>{
+    (g.menuItems||[]).forEach(mi=>{
+      menuTotals[mi.menu]=(menuTotals[mi.menu]||0)+mi.count;
+    });
+  });
+  const menuColors={'Standard':'badge-grey','Vegetarisch 🌿':'badge-green','Vegan 🌱':'badge-green','Glutenfrei':'badge-yellow','Kinderteller 🧒':'badge-blue','Halal':'badge-purple','Allergie (Nüsse)':'badge-orange','Allergie (Laktose)':'badge-orange','Sonstiges':'badge-grey'};
+  const menuHTML=Object.entries(menuTotals).map(([m,c])=>`<span class="badge ${menuColors[m]||'badge-grey'}">🍽️ ${m}: ${c}x</span>`).join('');
+  document.getElementById('menu-overview').innerHTML=menuHTML||'<span style="font-size:0.82rem;color:var(--text-light);">Noch keine Menüangaben</span>';
+
+  const tbody=document.getElementById('gaeste-table');
+  if(!list.length){tbody.innerHTML='<tr><td colspan="8" class="empty-state">Noch keine Gäste eingetragen.</td></tr>';return;}
+  tbody.innerHTML=list.map(g=>{
+    const menuDisplay=(g.menuItems||[]).map(mi=>`<span class="badge badge-grey" style="margin:1px 2px;font-size:0.7rem;">${mi.menu} ×${mi.count}</span>`).join('');
+    return `<tr>
+      <td><strong>${g.name}</strong></td>
+      <td><input type="number" value="${g.count||1}" min="1" style="width:55px" onchange="updGast(${g.id},'count',this.value)"/></td>
+      <td><select onchange="updGast(${g.id},'invite',this.value)" style="width:auto">
+        <option ${g.invite==='nein'?'selected':''} value="nein">Nein</option>
+        <option ${g.invite==='ja'?'selected':''} value="ja">Ja ✓</option></select></td>
+      <td><select onchange="updGast(${g.id},'rsvp',this.value)" style="width:auto">
+        <option ${g.rsvp==='ausstehend'?'selected':''} value="ausstehend">Ausstehend</option>
+        <option ${g.rsvp==='zugesagt'?'selected':''} value="zugesagt">Zugesagt ✓</option>
+        <option ${g.rsvp==='abgesagt'?'selected':''} value="abgesagt">Abgesagt ✗</option></select></td>
+      <td><select onchange="updGast(${g.id},'hotel',this.value)" style="width:auto">
+        <option ${g.hotel==='nein'?'selected':''} value="nein">Nein</option>
+        <option ${g.hotel==='ja'?'selected':''} value="ja">Ja ✓</option>
+        <option ${g.hotel==='nicht nötig'?'selected':''} value="nicht nötig">n.n.</option></select></td>
+      <td style="max-width:180px">${menuDisplay||'<span style="color:var(--text-light);font-size:0.78rem;">–</span>'}</td>
+      <td><input type="text" value="${g.note||''}" style="width:110px" onchange="updGast(${g.id},'note',this.value)" placeholder="Notiz..."/></td>
+      <td><button class="btn btn-danger btn-sm" onclick="delGast(${g.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+function addGast(){
+  const name=document.getElementById('g-name').value.trim();if(!name)return;
+  state.gC++;
+  state.gaeste.push({
+    id:state.gC,name,count:parseInt(document.getElementById('g-count').value)||1,
+    invite:document.getElementById('g-invite').value,rsvp:document.getElementById('g-rsvp').value,
+    hotel:document.getElementById('g-hotel').value,menuItems:getMenuRows(),
+    note:document.getElementById('g-note').value
+  });
+  ['g-name','g-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('g-count').value=1;
+  closeModal('modal-gast');renderGaeste();save();
+}
+function updGast(id,f,v){const g=state.gaeste.find(x=>x.id===id);if(g){g[f]=f==='count'?parseInt(v)||1:v;renderGaeste();save();}}
+function delGast(id){state.gaeste=state.gaeste.filter(x=>x.id!==id);renderGaeste();save();}
+
+// ============================================================
+// DIENSTLEISTER
+// ============================================================
+function renderDienst(){
+  const tbody=document.getElementById('dienst-table');
+  if(!state.dienst.length){tbody.innerHTML='<tr><td colspan="9" class="empty-state">Noch keine Dienstleister.</td></tr>';return;}
+  tbody.innerHTML=state.dienst.map(d=>`<tr>
+    <td><strong>${d.kat}</strong></td>
+    <td>${d.name}</td>
+    <td style="font-size:0.78rem">${d.tel?'📞 '+d.tel+'<br>':''}${d.email?'✉️ '+d.email:''}</td>
+    <td>${d.price?fmt(d.price):'–'}</td>
+    <td>${d.deposit?fmt(d.deposit):'–'}</td>
+    <td><select onchange="updDienst(${d.id},'status',this.value)" style="width:auto">
+      <option ${d.status==='offen'?'selected':''} value="offen">Offen</option>
+      <option ${d.status==='anzahlung'?'selected':''} value="anzahlung">Anzahlung ✓</option>
+      <option ${d.status==='bezahlt'?'selected':''} value="bezahlt">Bezahlt ✓</option></select></td>
+    <td><select onchange="updDienst(${d.id},'contract',this.value)" style="width:auto">
+      <option ${d.contract==='ausstehend'?'selected':''} value="ausstehend">Ausstehend</option>
+      <option ${d.contract==='unterschrieben'?'selected':''} value="unterschrieben">Unterschrieben ✓</option></select></td>
+    <td><input type="text" value="${d.note||''}" style="width:110px" onchange="updDienst(${d.id},'note',this.value)" placeholder="Notiz..."/></td>
+    <td><button class="btn btn-danger btn-sm" onclick="delDienst(${d.id})">✕</button></td>
+  </tr>`).join('');
+}
+function addDienst(){
+  state.dC++;
+  state.dienst.push({id:state.dC,kat:document.getElementById('d-kat').value,name:document.getElementById('d-name').value,tel:document.getElementById('d-tel').value,email:document.getElementById('d-email').value,price:parseFloat(document.getElementById('d-price').value)||0,deposit:parseFloat(document.getElementById('d-deposit').value)||0,contract:document.getElementById('d-contract').value,status:document.getElementById('d-status').value,note:document.getElementById('d-note').value});
+  ['d-name','d-tel','d-email','d-price','d-deposit','d-note'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-dienst');renderDienst();save();
+}
+function updDienst(id,f,v){const d=state.dienst.find(x=>x.id===id);if(d){d[f]=v;renderDienst();save();}}
+function delDienst(id){state.dienst=state.dienst.filter(x=>x.id!==id);renderDienst();save();}
+
+// ============================================================
+// LOCATIONS
+// ============================================================
+function setRating(locId,val){const l=state.locations.find(x=>x.id===locId);if(l){l.rating=val;renderLocations();save();}}
+function renderLocations(){
+  const el=document.getElementById('location-cards');
+  if(!state.locations.length){el.innerHTML='<div class="empty-state">Noch keine Locations hinzugefügt.</div>';return;}
+  el.innerHTML=state.locations.map(l=>{
+    const stars=[1,2,3,4,5].map(s=>`<span class="star" onclick="setRating(${l.id},${s})">${s<=(l.rating||0)?'⭐':'☆'}</span>`).join('');
+    return `<div class="card" style="border-left:4px solid var(--rose);margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--brown);font-weight:700;">${l.name}</div>
+          <div style="font-size:0.8rem;color:var(--text-light);margin-top:2px;">📍 ${l.ort||'–'}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <select onchange="updLocation(${l.id},'status',this.value)" style="width:auto;font-size:0.8rem;">
+            ${['Interessant','Besichtigung geplant','Besichtigt','Favorit ⭐','Abgelehnt'].map(s=>`<option ${l.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+          <button class="btn btn-danger btn-sm" onclick="delLocation(${l.id})">✕</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin:8px 0 4px;align-items:center;"><span style="font-size:0.8rem;color:var(--text-light);">Bewertung:</span><div class="stars">${stars}</div></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:7px;margin-top:9px;">
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Kapazität</div><div style="font-weight:700;color:var(--brown);">${l.cap?l.cap+' Personen':'–'}</div></div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Mietpreis</div><div style="font-weight:700;color:var(--brown);">${l.price?fmt(l.price):'–'}</div></div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Übernachtung</div><div style="font-weight:700;color:${l.hotel==='ja'?'var(--green)':'var(--rose-dark)'};">${l.hotel==='ja'?'✓ Möglich':'✗ Nein'}</div></div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Catering</div><div style="font-weight:700;color:var(--brown);">${l.catering||'–'}</div></div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Außenbereich</div><div style="font-weight:700;color:${l.outside==='ja'?'var(--green)':'var(--rose-dark)'};">${l.outside==='ja'?'✓ Ja':'✗ Nein'}</div></div>
+        ${l.web?`<div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Website</div><a href="https://${l.web.replace(/^https?:\/\//,'')}" target="_blank" style="color:var(--rose-dark);font-weight:700;font-size:0.83rem;">${l.web}</a></div>`:''}
+      </div>
+      ${l.note?`<div style="margin-top:9px;font-size:0.82rem;color:var(--text-light);border-top:1px solid var(--rose-light);padding-top:7px;">📝 ${l.note}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function addLocation(){
+  state.lC++;
+  state.locations.push({id:state.lC,name:document.getElementById('l-name').value,ort:document.getElementById('l-ort').value,cap:parseFloat(document.getElementById('l-cap').value)||0,price:parseFloat(document.getElementById('l-price').value)||0,hotel:document.getElementById('l-hotel').value,catering:document.getElementById('l-catering').value,outside:document.getElementById('l-outside').value,status:document.getElementById('l-status').value,web:document.getElementById('l-web').value,note:document.getElementById('l-note').value,rating:0});
+  ['l-name','l-ort','l-cap','l-price','l-web','l-note'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-location');renderLocations();save();
+}
+function updLocation(id,f,v){const l=state.locations.find(x=>x.id===id);if(l){l[f]=v;renderLocations();save();}}
+function delLocation(id){state.locations=state.locations.filter(x=>x.id!==id);renderLocations();save();}
+
+// ============================================================
+// TAGESABLAUF
+// ============================================================
+function renderAblauf(){
+  const el=document.getElementById('ablauf-list');
+  if(!state.ablauf.length){el.innerHTML='<div class="empty-state">Noch keine Programmpunkte.</div>';return;}
+  const s=[...state.ablauf].sort((a,b)=>a.time.localeCompare(b.time));
+  el.innerHTML=s.map(a=>`<div class="timeline-item"><div class="timeline-dot"></div>
+    <div class="timeline-card">
+      <div class="timeline-time">${a.emoji||''} ${a.time}</div>
+      <div class="timeline-text"><div style="font-weight:600">${a.title}</div>${a.note?`<div class="timeline-note">${a.note}</div>`:''}</div>
+      <button class="btn btn-danger btn-sm" onclick="delAblauf(${a.id})">✕</button>
+    </div></div>`).join('');
+}
+function addAblauf(){
+  const time=document.getElementById('a-time').value.trim();const title=document.getElementById('a-title').value.trim();if(!time||!title)return;
+  state.aC++;
+  state.ablauf.push({id:state.aC,time,emoji:document.getElementById('a-emoji').value.trim(),title,note:document.getElementById('a-note').value.trim()});
+  ['a-time','a-emoji','a-title','a-note'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-ablauf');renderAblauf();save();
+}
+function delAblauf(id){state.ablauf=state.ablauf.filter(x=>x.id!==id);renderAblauf();save();}
+
+// ============================================================
+// TISCHPLAN (Canvas)
+// ============================================================
+let canvas, ctx, currentTool='round', dragging=null, dragOffX=0, dragOffY=0, wallStart=null, renamingId=null;
+const TABLE_COLORS={round:'#c8896a',rect:'#7a9e7e',wall:'#6b4f3a'};
+
+function setTool(t){
+  currentTool=t;
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('tool-'+t);if(el)el.classList.add('active');
+  canvas.style.cursor=t==='select'?'default':t==='delete'?'not-allowed':'crosshair';
+}
+
+function resizeCanvas(){
+  if(!canvas)return;
+  const wrap=canvas.parentElement;
+  const w=Math.min(900,wrap.clientWidth-4);
+  canvas.width=w;canvas.height=Math.round(w*0.62);
+}
+
+function drawCanvas(){
+  if(!ctx)return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // grid
+  ctx.strokeStyle='#e8ddd5';ctx.lineWidth=1;
+  for(let x=0;x<canvas.width;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke();}
+  for(let y=0;y<canvas.height;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke();}
+  // objects
+  state.tischObjects.forEach(obj=>drawObj(obj,false));
+  // wall preview
+  if(wallStart&&currentTool==='wall'){
+    ctx.strokeStyle='#6b4f3a';ctx.lineWidth=4;ctx.setLineDash([8,4]);
+    ctx.beginPath();ctx.moveTo(wallStart.x,wallStart.y);ctx.lineTo(wallStart.x2||wallStart.x,wallStart.y2||wallStart.y);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+function drawObj(obj,selected){
+  ctx.save();
+  const col=obj.color||TABLE_COLORS[obj.type]||'#c8896a';
+  if(obj.type==='round'){
+    ctx.beginPath();ctx.arc(obj.x,obj.y,obj.r||36,0,Math.PI*2);
+    ctx.fillStyle=col+'cc';ctx.fill();
+    ctx.strokeStyle=selected?'#3498db':darken(col);ctx.lineWidth=selected?3:2;ctx.stroke();
+    // seats
+    const seats=obj.seats||8;
+    for(let i=0;i<seats;i++){const a=(i/seats)*Math.PI*2-Math.PI/2;const r=(obj.r||36)+12;ctx.beginPath();ctx.arc(obj.x+Math.cos(a)*r,obj.y+Math.sin(a)*r,6,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle=darken(col);ctx.lineWidth=1.5;ctx.stroke();}
+    if(obj.label){ctx.fillStyle='white';ctx.font='bold 11px Lato';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(obj.label.length>12?obj.label.substring(0,10)+'…':obj.label,obj.x,obj.y);}
+  } else if(obj.type==='rect'){
+    const w=obj.w||100,h=obj.h||60;
+    ctx.beginPath();ctx.roundRect(obj.x-w/2,obj.y-h/2,w,h,6);
+    ctx.fillStyle=col+'cc';ctx.fill();
+    ctx.strokeStyle=selected?'#3498db':darken(col);ctx.lineWidth=selected?3:2;ctx.stroke();
+    // seats top/bottom
+    const sw=obj.seats||6;const colW=Math.floor(sw/2);
+    for(let i=0;i<colW;i++){const sx=obj.x-w/2+16+i*(w-32)/(Math.max(colW-1,1));ctx.beginPath();ctx.arc(sx,obj.y-h/2-10,6,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle=darken(col);ctx.lineWidth=1.5;ctx.stroke();}
+    for(let i=0;i<sw-colW;i++){const sx=obj.x-w/2+16+i*(w-32)/(Math.max(sw-colW-1,1));ctx.beginPath();ctx.arc(sx,obj.y+h/2+10,6,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle=darken(col);ctx.lineWidth=1.5;ctx.stroke();}
+    if(obj.label){ctx.fillStyle='white';ctx.font='bold 11px Lato';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(obj.label.length>14?obj.label.substring(0,12)+'…':obj.label,obj.x,obj.y);}
+  } else if(obj.type==='wall'){
+    ctx.beginPath();ctx.moveTo(obj.x1,obj.y1);ctx.lineTo(obj.x2,obj.y2);
+    ctx.strokeStyle=col;ctx.lineWidth=obj.thick||8;ctx.lineCap='round';ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function darken(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgb(${Math.max(0,r-40)},${Math.max(0,g-40)},${Math.max(0,b-40)})`;
+}
+
+function getPos(e){
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
+  const touch=e.touches?e.touches[0]:e;
+  return {x:(touch.clientX-rect.left)*scaleX,y:(touch.clientY-rect.top)*scaleY};
+}
+
+function hitTest(obj,x,y){
+  if(obj.type==='round') return Math.hypot(x-obj.x,y-obj.y)<=(obj.r||36)+8;
+  if(obj.type==='rect'){const w=obj.w||100,h=obj.h||60;return x>=obj.x-w/2-8&&x<=obj.x+w/2+8&&y>=obj.y-h/2-8&&y<=obj.y+h/2+8;}
+  if(obj.type==='wall'){
+    const dx=obj.x2-obj.x1,dy=obj.y2-obj.y1,len=Math.hypot(dx,dy);
+    if(len<1)return false;
+    const t=((x-obj.x1)*dx+(y-obj.y1)*dy)/(len*len);
+    const tc=Math.max(0,Math.min(1,t));
+    return Math.hypot(x-(obj.x1+tc*dx),y-(obj.y1+tc*dy))<=(obj.thick||8)/2+6;
+  }
+  return false;
+}
+
+function initCanvas(){
+  canvas=document.getElementById('tischplan-canvas');
+  ctx=canvas.getContext('2d');
+  resizeCanvas();
+  let objIdC=100;
+
+  canvas.addEventListener('mousedown',e=>{
+    const {x,y}=getPos(e);
+    const col=document.getElementById('table-color').value;
+    if(currentTool==='select'){
+      // find hit
+      const hit=[...state.tischObjects].reverse().find(o=>hitTest(o,x,y));
+      if(hit){dragging=hit;dragOffX=x-(hit.type==='wall'?(hit.x1+hit.x2)/2:hit.x);dragOffY=y-(hit.type==='wall'?(hit.y1+hit.y2)/2:hit.y);}
+      else dragging=null;
+    } else if(currentTool==='delete'){
+      const hit=[...state.tischObjects].reverse().find(o=>hitTest(o,x,y));
+      if(hit){state.tischObjects=state.tischObjects.filter(o=>o!==hit);drawCanvas();save();}
+    } else if(currentTool==='wall'){
+      wallStart={x,y,x2:x,y2:y};
+    } else if(currentTool==='round'){
+      objIdC++;
+      state.tischObjects.push({id:objIdC,type:'round',x,y,r:36,seats:8,label:'Tisch '+(state.tischObjects.filter(o=>o.type==='round').length+1),color:col});
+      drawCanvas();save();
+    } else if(currentTool==='rect'){
+      objIdC++;
+      state.tischObjects.push({id:objIdC,type:'rect',x,y,w:110,h:60,seats:8,label:'Tisch '+(state.tischObjects.filter(o=>o.type==='rect').length+1),color:col});
+      drawCanvas();save();
+    }
+  });
+
+  canvas.addEventListener('mousemove',e=>{
+    const {x,y}=getPos(e);
+    if(currentTool==='select'&&dragging){
+      if(dragging.type==='wall'){const mx=x-dragOffX,my=y-dragOffY;const cx=(dragging.x1+dragging.x2)/2,cy=(dragging.y1+dragging.y2)/2;const dx=mx-cx,dy=my-cy;dragging.x1+=dx;dragging.y1+=dy;dragging.x2+=dx;dragging.y2+=dy;}
+      else{dragging.x=x-dragOffX;dragging.y=y-dragOffY;}
+      drawCanvas();
+    } else if(currentTool==='wall'&&wallStart){
+      wallStart.x2=x;wallStart.y2=y;drawCanvas();
+    }
+  });
+
+  canvas.addEventListener('mouseup',e=>{
+    const {x,y}=getPos(e);
+    if(currentTool==='wall'&&wallStart){
+      objIdC++;
+      if(Math.hypot(x-wallStart.x,y-wallStart.y)>10)
+        state.tischObjects.push({id:objIdC,type:'wall',x1:wallStart.x,y1:wallStart.y,x2,y2:y,thick:10,color:'#6b4f3a'});
+      wallStart=null;drawCanvas();save();
+    }
+    if(dragging){dragging=null;save();}
+  });
+
+  canvas.addEventListener('dblclick',e=>{
+    const {x,y}=getPos(e);
+    if(currentTool==='select'){
+      const hit=[...state.tischObjects].reverse().find(o=>hitTest(o,x,y)&&o.type!=='wall');
+      if(hit){renamingId=hit.id;document.getElementById('rename-input').value=hit.label||'';openModal('modal-rename');}
+    }
+  });
+
+  window.addEventListener('resize',()=>{resizeCanvas();drawCanvas();});
+  drawCanvas();
+}
+
+function confirmRename(){
+  const obj=state.tischObjects.find(o=>o.id===renamingId);
+  if(obj){obj.label=document.getElementById('rename-input').value;}
+  closeModal('modal-rename');drawCanvas();save();renamingId=null;
+}
+
+function clearCanvas(){if(confirm('Wirklich alles löschen?')){state.tischObjects=[];drawCanvas();save();}}
+function exportPlan(){
+  const link=document.createElement('a');link.download='tischplan.png';link.href=canvas.toDataURL();link.click();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+load();
+document.getElementById('wedding-date').value=state.weddingDate||'2027-07-15';
+document.getElementById('total-budget').value=state.totalBudget;
+const wd=new Date((state.weddingDate||'2027-07-15')+'T00:00:00');
+document.getElementById('date-display').textContent=wd.toLocaleDateString('de-DE',{day:'numeric',month:'long',year:'numeric'});
+renderCountdown();
+renderMilestones();
+renderBudget();
+renderGaeste();
+renderDienst();
+renderLocations();
+renderAblauf();
+initCanvas();
+</script>
+</body>
+</html>
