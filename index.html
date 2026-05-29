@@ -455,6 +455,46 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
   </div>
 </div>
 
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCU1mdPjObJwbJEn0sMk5EJimzKcoTg3l4",
+  authDomain: "hochzeitsplaner-9e2e4.firebaseapp.com",
+  projectId: "hochzeitsplaner-9e2e4",
+  storageBucket: "hochzeitsplaner-9e2e4.firebasestorage.app",
+  messagingSenderId: "630955249672",
+  appId: "1:630955249672:web:b0bec05f336c9ba9c941bd",
+  measurementId: "G-G71XSJZN40"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.saveToCloud = async function(data){
+  try{
+    await setDoc(doc(db, "planner", "main"), data);
+  }catch(e){
+    console.error("Cloud Save Fehler", e);
+  }
+};
+
+window.loadFromCloud = async function(){
+  try{
+    const snap = await getDoc(doc(db, "planner", "main"));
+    if(snap.exists()) return snap.data();
+  }catch(e){
+    console.error("Cloud Load Fehler", e);
+  }
+  return null;
+};
+</script>
 <script>
 // ============================================================
 // STATE
@@ -497,8 +537,42 @@ let state = {
   msC:20, bC:10, gC:1, dC:1, lC:1, aC:1
 };
 
-function save(){try{localStorage.setItem('wp27_v2',JSON.stringify(state));}catch(e){}}
-function load(){try{const s=localStorage.getItem('wp27_v2');if(s){const p=JSON.parse(s);state={...state,...p};}}catch(e){}}
+async function save(){
+  try{
+    localStorage.setItem('wp27_v2', JSON.stringify(state));
+
+    if(window.saveToCloud){
+      await window.saveToCloud(state);
+    }
+
+  }catch(e){
+    console.error(e);
+  }
+}
+async function load(){
+
+  try{
+
+    if(window.loadFromCloud){
+      const cloudData = await window.loadFromCloud();
+
+      if(cloudData){
+        state = {...state, ...cloudData};
+        return;
+      }
+    }
+
+    const s = localStorage.getItem('wp27_v2');
+
+    if(s){
+      const p = JSON.parse(s);
+      state = {...state, ...p};
+    }
+
+  }catch(e){
+    console.error(e);
+  }
+}
 
 // ============================================================
 // UTILS
@@ -1030,19 +1104,34 @@ function exportPlan(){
 // ============================================================
 // INIT
 // ============================================================
-load();
-document.getElementById('wedding-date').value=state.weddingDate||'2027-07-15';
-document.getElementById('total-budget').value=state.totalBudget;
-const wd=new Date((state.weddingDate||'2027-07-15')+'T00:00:00');
-document.getElementById('date-display').textContent=wd.toLocaleDateString('de-DE',{day:'numeric',month:'long',year:'numeric'});
-renderCountdown();
-renderMilestones();
-renderBudget();
-renderGaeste();
-renderDienst();
-renderLocations();
-renderAblauf();
-initCanvas();
+(async () => {
+
+  await load();
+
+  document.getElementById('wedding-date').value = state.weddingDate || '2027-07-15';
+
+  document.getElementById('total-budget').value = state.totalBudget;
+
+  const wd = new Date((state.weddingDate || '2027-07-15') + 'T00:00:00');
+
+  document.getElementById('date-display').textContent =
+    wd.toLocaleDateString('de-DE',{
+      day:'numeric',
+      month:'long',
+      year:'numeric'
+    });
+
+  renderCountdown();
+  renderMilestones();
+  renderBudget();
+  renderGaeste();
+  renderDienst();
+  renderLocations();
+  renderAblauf();
+
+  initCanvas();
+
+})();
 </script>
 </body>
 </html>
