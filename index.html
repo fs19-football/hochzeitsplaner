@@ -557,8 +557,11 @@ async function load(){
       const cloudData = await window.loadFromCloud();
 
       if(cloudData){
-        state = {...state, ...cloudData};
-        return;
+    state = {...state, ...cloudData};
+
+    console.log("Cloud geladen:", state.totalBudget);
+
+    return;
       }
     }
 
