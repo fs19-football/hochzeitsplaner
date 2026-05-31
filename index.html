@@ -494,8 +494,8 @@ window.loadFromCloud = async function(){
   }
   return null;
 };
-</script>
-<script>
+
+// (Firebase geladen – Rest der App folgt direkt im selben Modul)
 // ============================================================
 // STATE
 // ============================================================
@@ -1135,6 +1135,38 @@ function exportPlan(){
   initCanvas();
 
 })();
+
+// Alle Funktionen global verfügbar machen (nötig weil wir jetzt ein ES-Modul sind)
+window.showTab = showTab;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.onDateChange = onDateChange;
+window.addMilestone = addMilestone;
+window.toggleMs = toggleMs;
+window.deleteMs = deleteMs;
+window.updateBudget = updateBudget;
+window.addBudget = addBudget;
+window.updBudget = updBudget;
+window.delBudget = delBudget;
+window.addGast = addGast;
+window.updGast = updGast;
+window.delGast = delGast;
+window.addMenuRow = addMenuRow;
+window.removeMenuRow = removeMenuRow;
+window.renderGaeste = renderGaeste;
+window.addDienst = addDienst;
+window.updDienst = updDienst;
+window.delDienst = delDienst;
+window.addLocation = addLocation;
+window.updLocation = updLocation;
+window.delLocation = delLocation;
+window.setRating = setRating;
+window.addAblauf = addAblauf;
+window.delAblauf = delAblauf;
+window.setTool = setTool;
+window.clearCanvas = clearCanvas;
+window.exportPlan = exportPlan;
+window.confirmRename = confirmRename;
 </script>
 </body>
 </html>
