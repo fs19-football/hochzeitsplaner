@@ -418,6 +418,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
       <div><label class="form-label">Musikanlage?</label><select id="l-musik"><option value="nein">Nein</option><option value="ja">Ja ✓</option></select></div>
       <div><label class="form-label">Website</label><input type="text" id="l-web" placeholder="www.location.de"/></div>
     </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Mobiliar inklusive?</label><select id="l-mobiliar"><option value="nein">Nein</option><option value="ja">Ja ✓</option></select></div>
+      <div><label class="form-label">Getränkeservice inklusive?</label><select id="l-getraenke"><option value="nein">Nein</option><option value="ja">Ja ✓</option></select></div>
+    </div>
     <div class="form-row"><label class="form-label">Notizen</label><textarea id="l-note" rows="3" placeholder="Eindrücke, Besonderheiten..."></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-location')">Abbrechen</button>
@@ -444,6 +448,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
       <div><label class="form-label">Status</label><select id="le-status"><option>Interessant</option><option>Besichtigung geplant</option><option>Besichtigt</option><option>Favorit ⭐</option><option>Abgelehnt</option></select></div>
       <div><label class="form-label">Musikanlage?</label><select id="le-musik"><option value="nein">Nein</option><option value="ja">Ja ✓</option></select></div>
       <div><label class="form-label">Website</label><input type="text" id="le-web" placeholder="www.location.de"/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Mobiliar inklusive?</label><select id="le-mobiliar"><option value="nein">Nein</option><option value="ja">Ja ✓</option></select></div>
+      <div><label class="form-label">Getränkeservice inklusive?</label><select id="le-getraenke"><option value="nein">Nein</option><option value="ja">Ja ✓</option></select></div>
     </div>
     <div class="form-row"><label class="form-label">Notizen</label><textarea id="le-note" rows="3" placeholder="Eindrücke, Besonderheiten..."></textarea></div>
     <div class="modal-actions">
@@ -670,6 +678,7 @@ function renderMilestones(){
         <div class="milestone-title ${m.done?'done-text':''}">${m.prio==='urgent'&&!m.done?'⚠️ ':''}${m.title}</div>
         <div class="milestone-date">${fmtDate(m.date)}${m.note?' · '+m.note:''}</div>
       </div>
+      <button class="btn btn-secondary btn-sm" onclick="openMilestoneEdit(${m.id})">✏️</button>
       <button class="btn btn-danger btn-sm" onclick="deleteMs(${m.id})">✕</button>
     </div>`).join('');
 }
@@ -711,7 +720,7 @@ function renderBudget(){
       <td><input type="number" value="${b.plan}" style="width:85px" onchange="updBudget(${b.id},'plan',this.value)"/> €</td>
       <td><input type="number" value="${b.paid}" style="width:85px" onchange="updBudget(${b.id},'paid',this.value)"/> €</td>
       <td style="color:${open>0?'var(--rose-dark)':'var(--green)'}"><strong>${fmt(Math.max(0,open))}</strong></td>
-      <td><button class="btn btn-danger btn-sm" onclick="delBudget(${b.id})">✕</button></td>
+      <td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="openBudgetEdit(${b.id})">✏️</button> <button class="btn btn-danger btn-sm" onclick="delBudget(${b.id})">✕</button></td>
     </tr>`;
   }).join('');
   drawPie();
@@ -847,7 +856,7 @@ function renderGaeste(){
         <option ${g.hotel==='nicht nötig'?'selected':''} value="nicht nötig">n.n.</option></select></td>
       <td style="max-width:180px">${menuDisplay||'<span style="color:var(--text-light);font-size:0.78rem;">–</span>'}</td>
       <td><input type="text" value="${g.note||''}" style="width:110px" onchange="updGast(${g.id},'note',this.value)" placeholder="Notiz..."/></td>
-      <td><button class="btn btn-danger btn-sm" onclick="delGast(${g.id})">✕</button></td>
+      <td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="openGastEdit(${g.id})">✏️</button> <button class="btn btn-danger btn-sm" onclick="delGast(${g.id})">✕</button></td>
     </tr>`;
   }).join('');
 }
@@ -887,7 +896,7 @@ function renderDienst(){
       <option ${d.contract==='ausstehend'?'selected':''} value="ausstehend">Ausstehend</option>
       <option ${d.contract==='unterschrieben'?'selected':''} value="unterschrieben">Unterschrieben ✓</option></select></td>
     <td><input type="text" value="${d.note||''}" style="width:110px" onchange="updDienst(${d.id},'note',this.value)" placeholder="Notiz..."/></td>
-    <td><button class="btn btn-danger btn-sm" onclick="delDienst(${d.id})">✕</button></td>
+    <td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="openDienstEdit(${d.id})">✏️</button> <button class="btn btn-danger btn-sm" onclick="delDienst(${d.id})">✕</button></td>
   </tr>`).join('');
 }
 function addDienst(){
@@ -919,6 +928,8 @@ function openLocationEdit(id){
   document.getElementById('le-status').value=l.status||'Interessant';
   document.getElementById('le-web').value=l.web||'';
   document.getElementById('le-musik').value=l.musik||'nein';
+  document.getElementById('le-mobiliar').value=l.mobiliar||'nein';
+  document.getElementById('le-getraenke').value=l.getraenke||'nein';
   document.getElementById('le-note').value=l.note||'';
   openModal('modal-location-edit');
 }
@@ -935,6 +946,8 @@ function saveLocationEdit(){
   l.status=document.getElementById('le-status').value;
   l.web=document.getElementById('le-web').value;
   l.musik=document.getElementById('le-musik').value;
+  l.mobiliar=document.getElementById('le-mobiliar').value;
+  l.getraenke=document.getElementById('le-getraenke').value;
   l.note=document.getElementById('le-note').value;
   closeModal('modal-location-edit');
   renderLocations();save();
@@ -953,6 +966,7 @@ function renderLocations(){
         <div>
           <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--brown);font-weight:700;">${l.name||'–'}</div>
           <div style="font-size:0.8rem;color:var(--text-light);margin-top:2px;">📍 ${l.ort||'–'}</div>
+          ${l.web?`<div style="font-size:0.8rem;margin-top:3px;"><a href="https://${l.web.replace(/^https?:\/\//,'')}" target="_blank" style="color:var(--rose-dark);">${l.web}</a></div>`:''}
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
           <select onchange="updLocation(${l.id},'status',this.value)" style="width:auto;font-size:0.8rem;">
@@ -969,7 +983,8 @@ function renderLocations(){
         <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Catering</div><div style="font-weight:700;color:${cateringColor};">${cateringText}</div></div>
         <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Außenbereich</div><div style="font-weight:700;color:${l.outside==='ja'?'var(--green)':'var(--rose-dark)'};">${l.outside==='ja'?'✓ Ja':'✗ Nein'}</div></div>
         <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Musikanlage</div><div style="font-weight:700;color:${l.musik==='ja'?'var(--green)':'var(--rose-dark)'};">${l.musik==='ja'?'✓ Inklusive':'✗ Nein'}</div></div>
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Website</div><div style="font-weight:700;font-size:0.83rem;">${l.web?`<a href="https://${l.web.replace(/^https?:\/\//,'')}" target="_blank" style="color:var(--rose-dark);">${l.web}</a>`:'–'}</div></div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Mobiliar</div><div style="font-weight:700;color:${l.mobiliar==='ja'?'var(--green)':'var(--rose-dark)'};">${l.mobiliar==='ja'?'✓ Inklusive':'✗ Nein'}</div></div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Getränkeservice</div><div style="font-weight:700;color:${l.getraenke==='ja'?'var(--green)':'var(--rose-dark)'};">${l.getraenke==='ja'?'✓ Inklusive':'✗ Nein'}</div></div>
       </div>
       <div style="margin-top:9px;font-size:0.82rem;color:var(--text-light);border-top:1px solid var(--rose-light);padding-top:7px;">📝 ${l.note?(l.note.replace(/\n/g,'<br>')):'<em>Keine Notizen</em>'}</div>
     </div>`;
@@ -977,7 +992,7 @@ function renderLocations(){
 }
 function addLocation(){
   state.lC++;
-  state.locations.push({id:state.lC,name:document.getElementById('l-name').value,ort:document.getElementById('l-ort').value,cap:parseFloat(document.getElementById('l-cap').value)||0,price:parseFloat(document.getElementById('l-price').value)||0,catering:document.getElementById('l-catering').value,outside:document.getElementById('l-outside').value,musik:document.getElementById('l-musik').value,status:document.getElementById('l-status').value,web:document.getElementById('l-web').value,note:document.getElementById('l-note').value,rating:0});
+  state.locations.push({id:state.lC,name:document.getElementById('l-name').value,ort:document.getElementById('l-ort').value,cap:parseFloat(document.getElementById('l-cap').value)||0,price:parseFloat(document.getElementById('l-price').value)||0,catering:document.getElementById('l-catering').value,outside:document.getElementById('l-outside').value,musik:document.getElementById('l-musik').value,mobiliar:document.getElementById('l-mobiliar').value,getraenke:document.getElementById('l-getraenke').value,status:document.getElementById('l-status').value,web:document.getElementById('l-web').value,note:document.getElementById('l-note').value,rating:0});
   ['l-name','l-ort','l-cap','l-price','l-web','l-note'].forEach(id=>document.getElementById(id).value='');
   closeModal('modal-location');renderLocations();save();
 }
@@ -995,6 +1010,7 @@ function renderAblauf(){
     <div class="timeline-card">
       <div class="timeline-time">${a.emoji||''} ${a.time}</div>
       <div class="timeline-text"><div style="font-weight:600">${a.title}</div>${a.note?`<div class="timeline-note">${a.note}</div>`:''}</div>
+      <button class="btn btn-secondary btn-sm" onclick="openAblaufEdit(${a.id})">✏️</button>
       <button class="btn btn-danger btn-sm" onclick="delAblauf(${a.id})">✕</button>
     </div></div>`).join('');
 }
@@ -1204,6 +1220,122 @@ function exportPlan(){
 
 })();
 
+
+// ============================================================
+// EDIT FUNCTIONS
+// ============================================================
+
+let editingMsId=null, editingBudgetId=null, editingGastId=null, editingDienstId=null, editingAblaufId=null;
+
+// --- Meilensteine ---
+function openMilestoneEdit(id){
+  const m=state.milestones.find(x=>x.id===id); if(!m)return;
+  editingMsId=id;
+  document.getElementById('mse-title').value=m.title||'';
+  document.getElementById('mse-date').value=m.date||'';
+  document.getElementById('mse-prio').value=m.prio||'normal';
+  document.getElementById('mse-note').value=m.note||'';
+  openModal('modal-milestone-edit');
+}
+function saveMilestoneEdit(){
+  const m=state.milestones.find(x=>x.id===editingMsId); if(!m)return;
+  m.title=document.getElementById('mse-title').value;
+  m.date=document.getElementById('mse-date').value;
+  m.prio=document.getElementById('mse-prio').value;
+  m.note=document.getElementById('mse-note').value;
+  closeModal('modal-milestone-edit'); renderMilestones(); save(); editingMsId=null;
+}
+
+// --- Budget ---
+function openBudgetEdit(id){
+  const b=state.budget.find(x=>x.id===id); if(!b)return;
+  editingBudgetId=id;
+  document.getElementById('be-kat').value=b.kat||'Location';
+  document.getElementById('be-desc').value=b.desc||'';
+  document.getElementById('be-plan').value=b.plan||0;
+  document.getElementById('be-paid').value=b.paid||0;
+  openModal('modal-budget-edit');
+}
+function saveBudgetEdit(){
+  const b=state.budget.find(x=>x.id===editingBudgetId); if(!b)return;
+  b.kat=document.getElementById('be-kat').value;
+  b.desc=document.getElementById('be-desc').value;
+  b.plan=parseFloat(document.getElementById('be-plan').value)||0;
+  b.paid=parseFloat(document.getElementById('be-paid').value)||0;
+  closeModal('modal-budget-edit'); renderBudget(); save(); editingBudgetId=null;
+}
+
+// --- Gäste ---
+function openGastEdit(id){
+  const g=state.gaeste.find(x=>x.id===id); if(!g)return;
+  editingGastId=id;
+  document.getElementById('ge-name').value=g.name||'';
+  document.getElementById('ge-count').value=g.count||1;
+  document.getElementById('ge-invite').value=g.invite||'nein';
+  document.getElementById('ge-rsvp').value=g.rsvp||'ausstehend';
+  document.getElementById('ge-hotel').value=g.hotel||'nein';
+  document.getElementById('ge-note').value=g.note||'';
+  openModal('modal-gast-edit');
+}
+function saveGastEdit(){
+  const g=state.gaeste.find(x=>x.id===editingGastId); if(!g)return;
+  g.name=document.getElementById('ge-name').value;
+  g.count=parseInt(document.getElementById('ge-count').value)||1;
+  g.invite=document.getElementById('ge-invite').value;
+  g.rsvp=document.getElementById('ge-rsvp').value;
+  g.hotel=document.getElementById('ge-hotel').value;
+  g.note=document.getElementById('ge-note').value;
+  closeModal('modal-gast-edit'); renderGaeste(); save(); editingGastId=null;
+}
+
+// --- Dienstleister ---
+function openDienstEdit(id){
+  const d=state.dienst.find(x=>x.id===id); if(!d)return;
+  editingDienstId=id;
+  document.getElementById('de-kat').value=d.kat||'Fotograf';
+  document.getElementById('de-name').value=d.name||'';
+  document.getElementById('de-tel').value=d.tel||'';
+  document.getElementById('de-email').value=d.email||'';
+  document.getElementById('de-price').value=d.price||0;
+  document.getElementById('de-deposit').value=d.deposit||0;
+  document.getElementById('de-contract').value=d.contract||'ausstehend';
+  document.getElementById('de-status').value=d.status||'offen';
+  document.getElementById('de-note').value=d.note||'';
+  openModal('modal-dienst-edit');
+}
+function saveDienstEdit(){
+  const d=state.dienst.find(x=>x.id===editingDienstId); if(!d)return;
+  d.kat=document.getElementById('de-kat').value;
+  d.name=document.getElementById('de-name').value;
+  d.tel=document.getElementById('de-tel').value;
+  d.email=document.getElementById('de-email').value;
+  d.price=parseFloat(document.getElementById('de-price').value)||0;
+  d.deposit=parseFloat(document.getElementById('de-deposit').value)||0;
+  d.contract=document.getElementById('de-contract').value;
+  d.status=document.getElementById('de-status').value;
+  d.note=document.getElementById('de-note').value;
+  closeModal('modal-dienst-edit'); renderDienst(); save(); editingDienstId=null;
+}
+
+// --- Tagesablauf ---
+function openAblaufEdit(id){
+  const a=state.ablauf.find(x=>x.id===id); if(!a)return;
+  editingAblaufId=id;
+  document.getElementById('ae-time').value=a.time||'';
+  document.getElementById('ae-emoji').value=a.emoji||'';
+  document.getElementById('ae-title').value=a.title||'';
+  document.getElementById('ae-note').value=a.note||'';
+  openModal('modal-ablauf-edit');
+}
+function saveAblaufEdit(){
+  const a=state.ablauf.find(x=>x.id===editingAblaufId); if(!a)return;
+  a.time=document.getElementById('ae-time').value;
+  a.emoji=document.getElementById('ae-emoji').value;
+  a.title=document.getElementById('ae-title').value;
+  a.note=document.getElementById('ae-note').value;
+  closeModal('modal-ablauf-edit'); renderAblauf(); save(); editingAblaufId=null;
+}
+
 // Alle Funktionen global verfügbar machen (nötig weil wir jetzt ein ES-Modul sind)
 window.showTab = showTab;
 window.openModal = openModal;
@@ -1237,6 +1369,121 @@ window.setTool = setTool;
 window.clearCanvas = clearCanvas;
 window.exportPlan = exportPlan;
 window.confirmRename = confirmRename;
+window.openMilestoneEdit = openMilestoneEdit;
+window.saveMilestoneEdit = saveMilestoneEdit;
+window.openBudgetEdit = openBudgetEdit;
+window.saveBudgetEdit = saveBudgetEdit;
+window.openGastEdit = openGastEdit;
+window.saveGastEdit = saveGastEdit;
+window.openDienstEdit = openDienstEdit;
+window.saveDienstEdit = saveDienstEdit;
+window.openAblaufEdit = openAblaufEdit;
+window.saveAblaufEdit = saveAblaufEdit;
 </script>
+
+<!-- Meilenstein bearbeiten -->
+<div class="modal-bg" id="modal-milestone-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Meilenstein bearbeiten</div>
+    <div class="form-row"><label class="form-label">Aufgabe</label><input type="text" id="mse-title" placeholder="z.B. Location buchen"/></div>
+    <div class="form-row-2">
+      <div><label class="form-label">Bis wann?</label><input type="date" id="mse-date"/></div>
+      <div><label class="form-label">Priorität</label><select id="mse-prio"><option value="normal">Normal</option><option value="urgent">Dringend ⚠️</option></select></div>
+    </div>
+    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="mse-note" placeholder="Optional..."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-milestone-edit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveMilestoneEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Budget bearbeiten -->
+<div class="modal-bg" id="modal-budget-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Kostenposition bearbeiten</div>
+    <div class="form-row"><label class="form-label">Kategorie</label>
+      <select id="be-kat"><option>Location</option><option>Catering</option><option>Outfit (Braut)</option><option>Outfit (Bräutigam)</option><option>Fotograf</option><option>Videograf</option><option>DJ / Musik</option><option>Florist / Deko</option><option>Torte</option><option>Einladungen</option><option>Transport</option><option>Ringe</option><option>Flitterwochen</option><option>Sonstiges</option></select>
+    </div>
+    <div class="form-row"><label class="form-label">Beschreibung</label><input type="text" id="be-desc" placeholder="z.B. Anzahlung Location XY"/></div>
+    <div class="form-row-2">
+      <div><label class="form-label">Geplant (€)</label><input type="number" id="be-plan" placeholder="0"/></div>
+      <div><label class="form-label">Bezahlt (€)</label><input type="number" id="be-paid" placeholder="0"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-budget-edit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveBudgetEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gast bearbeiten -->
+<div class="modal-bg" id="modal-gast-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Gast bearbeiten</div>
+    <div class="form-row-2">
+      <div><label class="form-label">Name / Gruppe</label><input type="text" id="ge-name" placeholder="Fam. Schmidt"/></div>
+      <div><label class="form-label">Anzahl Personen</label><input type="number" id="ge-count" value="1" min="1"/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Einladung verschickt?</label><select id="ge-invite"><option value="nein">Nein</option><option value="ja">Ja ✓</option></select></div>
+      <div><label class="form-label">Zusage</label><select id="ge-rsvp"><option value="ausstehend">Ausstehend</option><option value="zugesagt">Zugesagt ✓</option><option value="abgesagt">Abgesagt ✗</option></select></div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Hotel gebucht?</label>
+      <select id="ge-hotel"><option value="nein">Nein</option><option value="ja">Ja ✓</option><option value="nicht nötig">Nicht nötig</option></select>
+    </div>
+    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="ge-note" placeholder="z.B. Allergie, Sonderwunsch..."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-gast-edit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveGastEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dienstleister bearbeiten -->
+<div class="modal-bg" id="modal-dienst-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Dienstleister bearbeiten</div>
+    <div class="form-row-2">
+      <div><label class="form-label">Kategorie</label><select id="de-kat"><option>Fotograf</option><option>Videograf</option><option>DJ</option><option>Band</option><option>Florist</option><option>Catering</option><option>Torte</option><option>Visagistin/Friseur</option><option>Trauredner/in</option><option>Transport/Limousine</option><option>Sonstiges</option></select></div>
+      <div><label class="form-label">Name / Firma</label><input type="text" id="de-name" placeholder="Max Foto GmbH"/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Telefon</label><input type="tel" id="de-tel" placeholder="+49 ..."/></div>
+      <div><label class="form-label">E-Mail</label><input type="email" id="de-email" placeholder="mail@..."/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Gesamtpreis (€)</label><input type="number" id="de-price" placeholder="0"/></div>
+      <div><label class="form-label">Anzahlung (€)</label><input type="number" id="de-deposit" placeholder="0"/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Vertrag</label><select id="de-contract"><option value="ausstehend">Ausstehend</option><option value="unterschrieben">Unterschrieben ✓</option></select></div>
+      <div><label class="form-label">Zahlungsstatus</label><select id="de-status"><option value="offen">Offen</option><option value="anzahlung">Anzahlung bezahlt</option><option value="bezahlt">Vollständig bezahlt ✓</option></select></div>
+    </div>
+    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="de-note" placeholder="z.B. Probetermin am..."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-dienst-edit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveDienstEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tagesablauf bearbeiten -->
+<div class="modal-bg" id="modal-ablauf-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Ablaufpunkt bearbeiten</div>
+    <div class="form-row-2">
+      <div><label class="form-label">Uhrzeit</label><input type="text" id="ae-time" placeholder="14:30"/></div>
+      <div><label class="form-label">Emoji</label><input type="text" id="ae-emoji" placeholder="💒"/></div>
+    </div>
+    <div class="form-row"><label class="form-label">Programmpunkt</label><input type="text" id="ae-title" placeholder="Trauung beginnt"/></div>
+    <div class="form-row"><label class="form-label">Details</label><input type="text" id="ae-note" placeholder="Optional..."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-ablauf-edit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveAblaufEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
