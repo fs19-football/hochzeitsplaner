@@ -399,7 +399,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
   </div>
 </div>
 
-<!-- Location -->
+<!-- Location hinzufügen -->
 <div class="modal-bg" id="modal-location">
   <div class="modal">
     <div class="modal-title">📍 Location hinzufügen</div>
@@ -410,18 +410,43 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
       <div><label class="form-label">Mietpreis (€)</label><input type="number" id="l-price" placeholder="3000"/></div>
     </div>
     <div class="form-row-2">
-      <div><label class="form-label">Übernachtung?</label><select id="l-hotel"><option value="nein">Nein</option><option value="ja">Ja</option></select></div>
       <div><label class="form-label">Catering inklusive?</label><select id="l-catering"><option value="nein">Nein</option><option value="ja">Ja</option><option value="eigenes möglich">Eigenes möglich</option></select></div>
+      <div><label class="form-label">Außenbereich?</label><select id="l-outside"><option value="nein">Nein</option><option value="ja">Ja</option></select></div>
     </div>
     <div class="form-row-2">
-      <div><label class="form-label">Außenbereich?</label><select id="l-outside"><option value="nein">Nein</option><option value="ja">Ja</option></select></div>
       <div><label class="form-label">Status</label><select id="l-status"><option>Interessant</option><option>Besichtigung geplant</option><option>Besichtigt</option><option>Favorit ⭐</option><option>Abgelehnt</option></select></div>
+      <div><label class="form-label">Website</label><input type="text" id="l-web" placeholder="www.location.de"/></div>
     </div>
-    <div class="form-row"><label class="form-label">Website</label><input type="text" id="l-web" placeholder="www.location.de"/></div>
-    <div class="form-row"><label class="form-label">Notizen</label><textarea id="l-note" rows="2" placeholder="Eindrücke, Besonderheiten..."></textarea></div>
+    <div class="form-row"><label class="form-label">Notizen</label><textarea id="l-note" rows="3" placeholder="Eindrücke, Besonderheiten..."></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-location')">Abbrechen</button>
       <button class="btn btn-primary" onclick="addLocation()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Location bearbeiten -->
+<div class="modal-bg" id="modal-location-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Location bearbeiten</div>
+    <div class="form-row"><label class="form-label">Name</label><input type="text" id="le-name" placeholder="Schloss Musterhausen"/></div>
+    <div class="form-row"><label class="form-label">Ort / Adresse</label><input type="text" id="le-ort" placeholder="Musterstraße 1, 12345..."/></div>
+    <div class="form-row-2">
+      <div><label class="form-label">Kapazität</label><input type="number" id="le-cap" placeholder="150"/></div>
+      <div><label class="form-label">Mietpreis (€)</label><input type="number" id="le-price" placeholder="3000"/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Catering inklusive?</label><select id="le-catering"><option value="nein">Nein</option><option value="ja">Ja</option><option value="eigenes möglich">Eigenes möglich</option></select></div>
+      <div><label class="form-label">Außenbereich?</label><select id="le-outside"><option value="nein">Nein</option><option value="ja">Ja</option></select></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Status</label><select id="le-status"><option>Interessant</option><option>Besichtigung geplant</option><option>Besichtigt</option><option>Favorit ⭐</option><option>Abgelehnt</option></select></div>
+      <div><label class="form-label">Website</label><input type="text" id="le-web" placeholder="www.location.de"/></div>
+    </div>
+    <div class="form-row"><label class="form-label">Notizen</label><textarea id="le-note" rows="3" placeholder="Eindrücke, Besonderheiten..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-location-edit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveLocationEdit()">Speichern</button>
     </div>
   </div>
 </div>
@@ -876,21 +901,60 @@ function delDienst(id){state.dienst=state.dienst.filter(x=>x.id!==id);renderDien
 // LOCATIONS
 // ============================================================
 function setRating(locId,val){const l=state.locations.find(x=>x.id===locId);if(l){l.rating=val;renderLocations();save();}}
+
+let editingLocationId = null;
+
+function openLocationEdit(id){
+  const l=state.locations.find(x=>x.id===id);
+  if(!l)return;
+  editingLocationId=id;
+  document.getElementById('le-name').value=l.name||'';
+  document.getElementById('le-ort').value=l.ort||'';
+  document.getElementById('le-cap').value=l.cap||'';
+  document.getElementById('le-price').value=l.price||'';
+  document.getElementById('le-catering').value=l.catering||'nein';
+  document.getElementById('le-outside').value=l.outside||'nein';
+  document.getElementById('le-status').value=l.status||'Interessant';
+  document.getElementById('le-web').value=l.web||'';
+  document.getElementById('le-note').value=l.note||'';
+  openModal('modal-location-edit');
+}
+
+function saveLocationEdit(){
+  const l=state.locations.find(x=>x.id===editingLocationId);
+  if(!l)return;
+  l.name=document.getElementById('le-name').value;
+  l.ort=document.getElementById('le-ort').value;
+  l.cap=parseFloat(document.getElementById('le-cap').value)||0;
+  l.price=parseFloat(document.getElementById('le-price').value)||0;
+  l.catering=document.getElementById('le-catering').value;
+  l.outside=document.getElementById('le-outside').value;
+  l.status=document.getElementById('le-status').value;
+  l.web=document.getElementById('le-web').value;
+  l.note=document.getElementById('le-note').value;
+  closeModal('modal-location-edit');
+  renderLocations();save();
+  editingLocationId=null;
+}
+
 function renderLocations(){
   const el=document.getElementById('location-cards');
   if(!state.locations.length){el.innerHTML='<div class="empty-state">Noch keine Locations hinzugefügt.</div>';return;}
   el.innerHTML=state.locations.map(l=>{
     const stars=[1,2,3,4,5].map(s=>`<span class="star" onclick="setRating(${l.id},${s})">${s<=(l.rating||0)?'⭐':'☆'}</span>`).join('');
+    const cateringColor = l.catering==='ja'?'var(--green)': l.catering==='eigenes möglich'?'var(--gold)':'var(--rose-dark)';
+    const cateringText = l.catering==='ja'?'✓ Ja': l.catering==='eigenes möglich'?'Eigenes möglich':'✗ Nein';
     return `<div class="card" style="border-left:4px solid var(--rose);margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
         <div>
-          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--brown);font-weight:700;">${l.name}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--brown);font-weight:700;">${l.name||'–'}</div>
           <div style="font-size:0.8rem;color:var(--text-light);margin-top:2px;">📍 ${l.ort||'–'}</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
           <select onchange="updLocation(${l.id},'status',this.value)" style="width:auto;font-size:0.8rem;">
             ${['Interessant','Besichtigung geplant','Besichtigt','Favorit ⭐','Abgelehnt'].map(s=>`<option ${l.status===s?'selected':''}>${s}</option>`).join('')}
           </select>
+          <button class="btn btn-secondary btn-sm" onclick="openLocationEdit(${l.id})">✏️ Bearbeiten</button>
           <button class="btn btn-danger btn-sm" onclick="delLocation(${l.id})">✕</button>
         </div>
       </div>
@@ -898,18 +962,17 @@ function renderLocations(){
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:7px;margin-top:9px;">
         <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Kapazität</div><div style="font-weight:700;color:var(--brown);">${l.cap?l.cap+' Personen':'–'}</div></div>
         <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Mietpreis</div><div style="font-weight:700;color:var(--brown);">${l.price?fmt(l.price):'–'}</div></div>
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Übernachtung</div><div style="font-weight:700;color:${l.hotel==='ja'?'var(--green)':'var(--rose-dark)'};">${l.hotel==='ja'?'✓ Möglich':'✗ Nein'}</div></div>
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Catering</div><div style="font-weight:700;color:var(--brown);">${l.catering||'–'}</div></div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Catering</div><div style="font-weight:700;color:${cateringColor};">${cateringText}</div></div>
         <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Außenbereich</div><div style="font-weight:700;color:${l.outside==='ja'?'var(--green)':'var(--rose-dark)'};">${l.outside==='ja'?'✓ Ja':'✗ Nein'}</div></div>
-        ${l.web?`<div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Website</div><a href="https://${l.web.replace(/^https?:\/\//,'')}" target="_blank" style="color:var(--rose-dark);font-weight:700;font-size:0.83rem;">${l.web}</a></div>`:''}
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Website</div><div style="font-weight:700;font-size:0.83rem;">${l.web?`<a href="https://${l.web.replace(/^https?:\/\//,'')}" target="_blank" style="color:var(--rose-dark);">${l.web}</a>`:'–'}</div></div>
       </div>
-      ${l.note?`<div style="margin-top:9px;font-size:0.82rem;color:var(--text-light);border-top:1px solid var(--rose-light);padding-top:7px;">📝 ${l.note}</div>`:''}
+      <div style="margin-top:9px;font-size:0.82rem;color:var(--text-light);border-top:1px solid var(--rose-light);padding-top:7px;">📝 ${l.note||'<em>Keine Notizen</em>'}</div>
     </div>`;
   }).join('');
 }
 function addLocation(){
   state.lC++;
-  state.locations.push({id:state.lC,name:document.getElementById('l-name').value,ort:document.getElementById('l-ort').value,cap:parseFloat(document.getElementById('l-cap').value)||0,price:parseFloat(document.getElementById('l-price').value)||0,hotel:document.getElementById('l-hotel').value,catering:document.getElementById('l-catering').value,outside:document.getElementById('l-outside').value,status:document.getElementById('l-status').value,web:document.getElementById('l-web').value,note:document.getElementById('l-note').value,rating:0});
+  state.locations.push({id:state.lC,name:document.getElementById('l-name').value,ort:document.getElementById('l-ort').value,cap:parseFloat(document.getElementById('l-cap').value)||0,price:parseFloat(document.getElementById('l-price').value)||0,catering:document.getElementById('l-catering').value,outside:document.getElementById('l-outside').value,status:document.getElementById('l-status').value,web:document.getElementById('l-web').value,note:document.getElementById('l-note').value,rating:0});
   ['l-name','l-ort','l-cap','l-price','l-web','l-note'].forEach(id=>document.getElementById(id).value='');
   closeModal('modal-location');renderLocations();save();
 }
@@ -1160,6 +1223,8 @@ window.delDienst = delDienst;
 window.addLocation = addLocation;
 window.updLocation = updLocation;
 window.delLocation = delLocation;
+window.openLocationEdit = openLocationEdit;
+window.saveLocationEdit = saveLocationEdit;
 window.setRating = setRating;
 window.addAblauf = addAblauf;
 window.delAblauf = delAblauf;
