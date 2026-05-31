@@ -413,8 +413,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
       <div><label class="form-label">Catering inklusive?</label><select id="l-catering"><option value="nein">Nein</option><option value="ja">Ja</option><option value="eigenes möglich">Eigenes möglich</option></select></div>
       <div><label class="form-label">Außenbereich?</label><select id="l-outside"><option value="nein">Nein</option><option value="ja">Ja</option></select></div>
     </div>
-    <div class="form-row-2">
+    <div class="form-row-3">
       <div><label class="form-label">Status</label><select id="l-status"><option>Interessant</option><option>Besichtigung geplant</option><option>Besichtigt</option><option>Favorit ⭐</option><option>Abgelehnt</option></select></div>
+      <div><label class="form-label">Musikanlage?</label><select id="l-musik"><option value="nein">Nein</option><option value="ja">Ja ✓</option></select></div>
       <div><label class="form-label">Website</label><input type="text" id="l-web" placeholder="www.location.de"/></div>
     </div>
     <div class="form-row"><label class="form-label">Notizen</label><textarea id="l-note" rows="3" placeholder="Eindrücke, Besonderheiten..."></textarea></div>
@@ -439,8 +440,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
       <div><label class="form-label">Catering inklusive?</label><select id="le-catering"><option value="nein">Nein</option><option value="ja">Ja</option><option value="eigenes möglich">Eigenes möglich</option></select></div>
       <div><label class="form-label">Außenbereich?</label><select id="le-outside"><option value="nein">Nein</option><option value="ja">Ja</option></select></div>
     </div>
-    <div class="form-row-2">
+    <div class="form-row-3">
       <div><label class="form-label">Status</label><select id="le-status"><option>Interessant</option><option>Besichtigung geplant</option><option>Besichtigt</option><option>Favorit ⭐</option><option>Abgelehnt</option></select></div>
+      <div><label class="form-label">Musikanlage?</label><select id="le-musik"><option value="nein">Nein</option><option value="ja">Ja ✓</option></select></div>
       <div><label class="form-label">Website</label><input type="text" id="le-web" placeholder="www.location.de"/></div>
     </div>
     <div class="form-row"><label class="form-label">Notizen</label><textarea id="le-note" rows="3" placeholder="Eindrücke, Besonderheiten..."></textarea></div>
@@ -916,6 +918,7 @@ function openLocationEdit(id){
   document.getElementById('le-outside').value=l.outside||'nein';
   document.getElementById('le-status').value=l.status||'Interessant';
   document.getElementById('le-web').value=l.web||'';
+  document.getElementById('le-musik').value=l.musik||'nein';
   document.getElementById('le-note').value=l.note||'';
   openModal('modal-location-edit');
 }
@@ -931,6 +934,7 @@ function saveLocationEdit(){
   l.outside=document.getElementById('le-outside').value;
   l.status=document.getElementById('le-status').value;
   l.web=document.getElementById('le-web').value;
+  l.musik=document.getElementById('le-musik').value;
   l.note=document.getElementById('le-note').value;
   closeModal('modal-location-edit');
   renderLocations();save();
@@ -964,15 +968,16 @@ function renderLocations(){
         <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Mietpreis</div><div style="font-weight:700;color:var(--brown);">${l.price?fmt(l.price):'–'}</div></div>
         <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Catering</div><div style="font-weight:700;color:${cateringColor};">${cateringText}</div></div>
         <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Außenbereich</div><div style="font-weight:700;color:${l.outside==='ja'?'var(--green)':'var(--rose-dark)'};">${l.outside==='ja'?'✓ Ja':'✗ Nein'}</div></div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Musikanlage</div><div style="font-weight:700;color:${l.musik==='ja'?'var(--green)':'var(--rose-dark)'};">${l.musik==='ja'?'✓ Inklusive':'✗ Nein'}</div></div>
         <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Website</div><div style="font-weight:700;font-size:0.83rem;">${l.web?`<a href="https://${l.web.replace(/^https?:\/\//,'')}" target="_blank" style="color:var(--rose-dark);">${l.web}</a>`:'–'}</div></div>
       </div>
-      <div style="margin-top:9px;font-size:0.82rem;color:var(--text-light);border-top:1px solid var(--rose-light);padding-top:7px;">📝 ${l.note||'<em>Keine Notizen</em>'}</div>
+      <div style="margin-top:9px;font-size:0.82rem;color:var(--text-light);border-top:1px solid var(--rose-light);padding-top:7px;">📝 ${l.note?(l.note.replace(/\n/g,'<br>')):'<em>Keine Notizen</em>'}</div>
     </div>`;
   }).join('');
 }
 function addLocation(){
   state.lC++;
-  state.locations.push({id:state.lC,name:document.getElementById('l-name').value,ort:document.getElementById('l-ort').value,cap:parseFloat(document.getElementById('l-cap').value)||0,price:parseFloat(document.getElementById('l-price').value)||0,catering:document.getElementById('l-catering').value,outside:document.getElementById('l-outside').value,status:document.getElementById('l-status').value,web:document.getElementById('l-web').value,note:document.getElementById('l-note').value,rating:0});
+  state.locations.push({id:state.lC,name:document.getElementById('l-name').value,ort:document.getElementById('l-ort').value,cap:parseFloat(document.getElementById('l-cap').value)||0,price:parseFloat(document.getElementById('l-price').value)||0,catering:document.getElementById('l-catering').value,outside:document.getElementById('l-outside').value,musik:document.getElementById('l-musik').value,status:document.getElementById('l-status').value,web:document.getElementById('l-web').value,note:document.getElementById('l-note').value,rating:0});
   ['l-name','l-ort','l-cap','l-price','l-web','l-note'].forEach(id=>document.getElementById(id).value='');
   closeModal('modal-location');renderLocations();save();
 }
