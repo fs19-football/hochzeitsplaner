@@ -141,6 +141,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
   <button class="tab-btn" onclick="showTab('location',this)">📍 Locations</button>
   <button class="tab-btn" onclick="showTab('tagesablauf',this)">🕐 Tagesablauf</button>
   <button class="tab-btn" onclick="showTab('tischplan',this)">🪑 Tischplan</button>
+  <button class="tab-btn" onclick="showTab('ideen',this)">💡 Ideen-Board</button>
 </div>
 
 <div class="main">
@@ -252,6 +253,18 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
       <button class="btn btn-primary" onclick="openModal('modal-location')">+ Location hinzufügen</button>
     </div>
     <div id="location-cards"></div>
+  </div>
+</div>
+
+<!-- ===== IDEEN BOARD ===== -->
+<div class="tab-panel" id="tab-ideen">
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">💡 Ideen-Board</div>
+      <button class="btn btn-primary" onclick="openModal('modal-idee')">+ Idee hinzufügen</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="ideen-filter-btns"></div>
+    <div id="ideen-board" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;"></div>
   </div>
 </div>
 
@@ -569,6 +582,8 @@ let state = {
   locations: [],
   ablauf: [],
   tischObjects: [],
+  ideen: [],
+  ideenC: 1,
   msC:20, bC:10, gC:1, dC:1, lC:1, aC:1
 };
 
@@ -622,6 +637,7 @@ function fmtDate(d){if(!d)return '';const dt=new Date(d+'T00:00:00');return dt.t
 // TABS
 // ============================================================
 function showTab(name,btn){
+  if(name==='ideen') setTimeout(renderIdeen,0);
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
@@ -667,11 +683,14 @@ function renderCountdown(){
 // ============================================================
 // MEILENSTEINE
 // ============================================================
+let msDoneOpen = false;
 function renderMilestones(){
   const el=document.getElementById('milestone-list');
   if(!state.milestones.length){el.innerHTML='<div class="empty-state">Noch keine Meilensteine.</div>';return;}
   const s=[...state.milestones].sort((a,b)=>new Date(a.date)-new Date(b.date));
-  el.innerHTML=s.map(m=>`
+  const open=s.filter(m=>!m.done);
+  const done=s.filter(m=>m.done);
+  const renderItem=m=>`
     <div class="milestone-item ${m.done?'done':''} ${m.prio==='urgent'&&!m.done?'urgent':''}">
       <div class="milestone-check" onclick="toggleMs(${m.id})">${m.done?'✓':''}</div>
       <div class="milestone-content">
@@ -680,8 +699,22 @@ function renderMilestones(){
       </div>
       <button class="btn btn-secondary btn-sm" onclick="openMilestoneEdit(${m.id})">✏️</button>
       <button class="btn btn-danger btn-sm" onclick="deleteMs(${m.id})">✕</button>
-    </div>`).join('');
+    </div>`;
+  let html = open.map(renderItem).join('');
+  if(done.length){
+    html += `
+    <div onclick="toggleMsDone()" style="cursor:pointer;display:flex;align-items:center;gap:8px;margin-top:18px;margin-bottom:6px;padding:8px 12px;background:var(--cream);border-radius:10px;color:var(--text-light);font-size:0.88rem;font-weight:600;user-select:none;">
+      <span style="font-size:1rem;">${msDoneOpen?'▾':'▸'}</span>
+      ✅ Erledigt (${done.length})
+    </div>
+    <div id="ms-done-section" style="display:${msDoneOpen?'block':'none'}">
+      ${done.map(renderItem).join('')}
+    </div>`;
+  }
+  el.innerHTML=html;
 }
+function toggleMsDone(){msDoneOpen=!msDoneOpen;renderMilestones();
+  renderIdeen();}
 function addMilestone(){
   const t=document.getElementById('ms-title').value.trim();if(!t)return;
   state.msC++;
@@ -1371,6 +1404,104 @@ function saveAblaufEdit(){
   closeModal('modal-ablauf-edit'); renderAblauf(); save(); editingAblaufId=null;
 }
 
+
+// ============================================================
+// IDEEN BOARD
+// ============================================================
+const IDEEN_FARBEN = {
+  'Deko':           '#fde8f0',
+  'Essen & Trinken':'#fef3cd',
+  'Zeremonie':      '#e8f4fd',
+  'Musik':          '#f0e8fd',
+  'Outfit':         '#fde8e8',
+  'Fotos':          '#e8fdf0',
+  'Gäste':          '#fdf5e8',
+  'Sonstiges':      '#f5f5f5',
+};
+const IDEEN_EMOJI = {
+  'Deko':'🌸','Essen & Trinken':'🍽️','Zeremonie':'💒','Musik':'🎵',
+  'Outfit':'👗','Fotos':'📷','Gäste':'👥','Sonstiges':'✨'
+};
+let activeIdeenFilter = 'Alle';
+
+function renderIdeen(){
+  const board = document.getElementById('ideen-board');
+  const filterEl = document.getElementById('ideen-filter-btns');
+  if(!board) return;
+
+  // build filter buttons
+  const kats = ['Alle', ...Object.keys(IDEEN_FARBEN).filter(k => state.ideen.some(i => i.kat===k))];
+  filterEl.innerHTML = kats.map(k => `
+    <button onclick="setIdeenFilter('${k}')" style="
+      padding:5px 14px;border-radius:20px;border:none;cursor:pointer;font-size:0.82rem;font-weight:600;
+      background:${activeIdeenFilter===k?'var(--rose-dark)':'var(--cream)'};
+      color:${activeIdeenFilter===k?'white':'var(--text-light)'};
+      transition:all .2s;">
+      ${k==='Alle'?'🗂️ Alle':IDEEN_EMOJI[k]+' '+k}
+    </button>`).join('');
+
+  const filtered = activeIdeenFilter==='Alle' ? state.ideen : state.ideen.filter(i=>i.kat===activeIdeenFilter);
+
+  if(!filtered.length){
+    board.innerHTML='<div class="empty-state" style="grid-column:1/-1">Noch keine Ideen in dieser Kategorie.</div>';
+    return;
+  }
+
+  board.innerHTML = filtered.map(i => `
+    <div style="
+      background:${IDEEN_FARBEN[i.kat]||'#f5f5f5'};
+      border-radius:14px;padding:16px;position:relative;
+      box-shadow:2px 3px 10px rgba(0,0,0,0.07);
+      min-height:120px;display:flex;flex-direction:column;gap:8px;">
+      <div style="font-size:0.75rem;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;">
+        ${IDEEN_EMOJI[i.kat]||'✨'} ${i.kat}
+      </div>
+      <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--brown);line-height:1.3;">
+        ${i.title}
+      </div>
+      ${i.note ? `<div style="font-size:0.82rem;color:var(--text-light);flex:1;white-space:pre-wrap;">${i.note.replace(/
+/g,'<br>')}</div>` : ''}
+      <div style="display:flex;gap:6px;margin-top:auto;padding-top:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="openIdeeEdit(${i.id})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="delIdee(${i.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function setIdeenFilter(k){ activeIdeenFilter=k; renderIdeen(); }
+
+function addIdee(){
+  const title = document.getElementById('idee-title').value.trim();
+  if(!title) return;
+  state.ideenC++;
+  state.ideen.push({
+    id: state.ideenC,
+    kat: document.getElementById('idee-kat').value,
+    title,
+    note: document.getElementById('idee-note').value
+  });
+  ['idee-title','idee-note'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-idee'); renderIdeen(); save();
+}
+
+let editingIdeeId = null;
+function openIdeeEdit(id){
+  const i = state.ideen.find(x=>x.id===id); if(!i) return;
+  editingIdeeId = id;
+  document.getElementById('ie-kat').value = i.kat;
+  document.getElementById('ie-title').value = i.title;
+  document.getElementById('ie-note').value = i.note||'';
+  openModal('modal-idee-edit');
+}
+function saveIdeeEdit(){
+  const i = state.ideen.find(x=>x.id===editingIdeeId); if(!i) return;
+  i.kat = document.getElementById('ie-kat').value;
+  i.title = document.getElementById('ie-title').value;
+  i.note = document.getElementById('ie-note').value;
+  closeModal('modal-idee-edit'); renderIdeen(); save(); editingIdeeId=null;
+}
+function delIdee(id){ state.ideen=state.ideen.filter(x=>x.id!==id); renderIdeen(); save(); }
+
 // Alle Funktionen global verfügbar machen (nötig weil wir jetzt ein ES-Modul sind)
 window.showTab = showTab;
 window.openModal = openModal;
@@ -1378,6 +1509,7 @@ window.closeModal = closeModal;
 window.onDateChange = onDateChange;
 window.addMilestone = addMilestone;
 window.toggleMs = toggleMs;
+window.toggleMsDone = toggleMsDone;
 window.deleteMs = deleteMs;
 window.updateBudget = updateBudget;
 window.addBudget = addBudget;
@@ -1415,6 +1547,11 @@ window.openDienstEdit = openDienstEdit;
 window.saveDienstEdit = saveDienstEdit;
 window.openAblaufEdit = openAblaufEdit;
 window.saveAblaufEdit = saveAblaufEdit;
+window.addIdee = addIdee;
+window.openIdeeEdit = openIdeeEdit;
+window.saveIdeeEdit = saveIdeeEdit;
+window.delIdee = delIdee;
+window.setIdeenFilter = setIdeenFilter;
 </script>
 
 <!-- Meilenstein bearbeiten -->
@@ -1523,6 +1660,58 @@ window.saveAblaufEdit = saveAblaufEdit;
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-ablauf-edit')">Abbrechen</button>
       <button class="btn btn-primary" onclick="saveAblaufEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Idee hinzufügen -->
+<div class="modal-bg" id="modal-idee">
+  <div class="modal">
+    <div class="modal-title">💡 Idee hinzufügen</div>
+    <div class="form-row">
+      <label class="form-label">Kategorie</label>
+      <select id="idee-kat">
+        <option value="Deko">🌸 Deko</option>
+        <option value="Essen & Trinken">🍽️ Essen & Trinken</option>
+        <option value="Zeremonie">💒 Zeremonie</option>
+        <option value="Musik">🎵 Musik</option>
+        <option value="Outfit">👗 Outfit</option>
+        <option value="Fotos">📷 Fotos</option>
+        <option value="Gäste">👥 Gäste</option>
+        <option value="Sonstiges">✨ Sonstiges</option>
+      </select>
+    </div>
+    <div class="form-row"><label class="form-label">Titel</label><input type="text" id="idee-title" placeholder="z.B. Lichterketten am Eingang"/></div>
+    <div class="form-row"><label class="form-label">Beschreibung / Notiz</label><textarea id="idee-note" rows="3" placeholder="Details, Links, Inspiration..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-idee')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="addIdee()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Idee bearbeiten -->
+<div class="modal-bg" id="modal-idee-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Idee bearbeiten</div>
+    <div class="form-row">
+      <label class="form-label">Kategorie</label>
+      <select id="ie-kat">
+        <option value="Deko">🌸 Deko</option>
+        <option value="Essen & Trinken">🍽️ Essen & Trinken</option>
+        <option value="Zeremonie">💒 Zeremonie</option>
+        <option value="Musik">🎵 Musik</option>
+        <option value="Outfit">👗 Outfit</option>
+        <option value="Fotos">📷 Fotos</option>
+        <option value="Gäste">👥 Gäste</option>
+        <option value="Sonstiges">✨ Sonstiges</option>
+      </select>
+    </div>
+    <div class="form-row"><label class="form-label">Titel</label><input type="text" id="ie-title" placeholder="z.B. Lichterketten am Eingang"/></div>
+    <div class="form-row"><label class="form-label">Beschreibung / Notiz</label><textarea id="ie-note" rows="3" placeholder="Details, Links, Inspiration..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-idee-edit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveIdeeEdit()">Speichern</button>
     </div>
   </div>
 </div>
