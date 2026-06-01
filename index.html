@@ -550,6 +550,26 @@ window.loadFromCloud = async function(){
 const MENU_OPTIONS = ['Standard','Vegetarisch 🌿','Vegan 🌱','Glutenfrei','Kinderteller 🧒','Halal','Allergie (Nüsse)','Allergie (Laktose)','Sonstiges'];
 const PIE_COLORS = ['#c8896a','#7a9e7e','#c9a84c','#6b4f3a','#9b59b6','#3498db','#e67e22','#1abc9c','#e74c3c','#95a5a6','#f39c12','#2980b9','#8e44ad','#16a085'];
 
+
+// ============================================================
+// IDEEN BOARD
+// ============================================================
+const IDEEN_FARBEN = {
+  'Deko':           '#fde8f0',
+  'Essen & Trinken':'#fef3cd',
+  'Zeremonie':      '#e8f4fd',
+  'Musik':          '#f0e8fd',
+  'Outfit':         '#fde8e8',
+  'Fotos':          '#e8fdf0',
+  'Gäste':          '#fdf5e8',
+  'Sonstiges':      '#f5f5f5',
+};
+const IDEEN_EMOJI = {
+  'Deko':'🌸','Essen & Trinken':'🍽️','Zeremonie':'💒','Musik':'🎵',
+  'Outfit':'👗','Fotos':'📷','Gäste':'👥','Sonstiges':'✨'
+};
+let activeIdeenFilter = 'Alle';
+
 let state = {
   weddingDate: '2027-07-15',
   milestones: [
@@ -713,8 +733,7 @@ function renderMilestones(){
   }
   el.innerHTML=html;
 }
-function toggleMsDone(){msDoneOpen=!msDoneOpen;renderMilestones();
-  renderIdeen();}
+function toggleMsDone(){msDoneOpen=!msDoneOpen;renderMilestones();}
 function addMilestone(){
   const t=document.getElementById('ms-title').value.trim();if(!t)return;
   state.msC++;
@@ -1248,6 +1267,7 @@ function exportPlan(){
   renderDienst();
   renderLocations();
   renderAblauf();
+  setTimeout(renderIdeen, 0);
 
   initCanvas();
 
@@ -1405,102 +1425,6 @@ function saveAblaufEdit(){
 }
 
 
-// ============================================================
-// IDEEN BOARD
-// ============================================================
-const IDEEN_FARBEN = {
-  'Deko':           '#fde8f0',
-  'Essen & Trinken':'#fef3cd',
-  'Zeremonie':      '#e8f4fd',
-  'Musik':          '#f0e8fd',
-  'Outfit':         '#fde8e8',
-  'Fotos':          '#e8fdf0',
-  'Gäste':          '#fdf5e8',
-  'Sonstiges':      '#f5f5f5',
-};
-const IDEEN_EMOJI = {
-  'Deko':'🌸','Essen & Trinken':'🍽️','Zeremonie':'💒','Musik':'🎵',
-  'Outfit':'👗','Fotos':'📷','Gäste':'👥','Sonstiges':'✨'
-};
-let activeIdeenFilter = 'Alle';
-
-function renderIdeen(){
-  const board = document.getElementById('ideen-board');
-  const filterEl = document.getElementById('ideen-filter-btns');
-  if(!board) return;
-
-  // build filter buttons
-  const kats = ['Alle', ...Object.keys(IDEEN_FARBEN).filter(k => state.ideen.some(i => i.kat===k))];
-  filterEl.innerHTML = kats.map(k => `
-    <button onclick="setIdeenFilter('${k}')" style="
-      padding:5px 14px;border-radius:20px;border:none;cursor:pointer;font-size:0.82rem;font-weight:600;
-      background:${activeIdeenFilter===k?'var(--rose-dark)':'var(--cream)'};
-      color:${activeIdeenFilter===k?'white':'var(--text-light)'};
-      transition:all .2s;">
-      ${k==='Alle'?'🗂️ Alle':IDEEN_EMOJI[k]+' '+k}
-    </button>`).join('');
-
-  const filtered = activeIdeenFilter==='Alle' ? state.ideen : state.ideen.filter(i=>i.kat===activeIdeenFilter);
-
-  if(!filtered.length){
-    board.innerHTML='<div class="empty-state" style="grid-column:1/-1">Noch keine Ideen in dieser Kategorie.</div>';
-    return;
-  }
-
-  board.innerHTML = filtered.map(i => `
-    <div style="
-      background:${IDEEN_FARBEN[i.kat]||'#f5f5f5'};
-      border-radius:14px;padding:16px;position:relative;
-      box-shadow:2px 3px 10px rgba(0,0,0,0.07);
-      min-height:120px;display:flex;flex-direction:column;gap:8px;">
-      <div style="font-size:0.75rem;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;">
-        ${IDEEN_EMOJI[i.kat]||'✨'} ${i.kat}
-      </div>
-      <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--brown);line-height:1.3;">
-        ${i.title}
-      </div>
-      ${i.note ? `<div style="font-size:0.82rem;color:var(--text-light);flex:1;white-space:pre-wrap;">${i.note.replace(/
-/g,'<br>')}</div>` : ''}
-      <div style="display:flex;gap:6px;margin-top:auto;padding-top:8px;">
-        <button class="btn btn-secondary btn-sm" onclick="openIdeeEdit(${i.id})">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="delIdee(${i.id})">✕</button>
-      </div>
-    </div>`).join('');
-}
-
-function setIdeenFilter(k){ activeIdeenFilter=k; renderIdeen(); }
-
-function addIdee(){
-  const title = document.getElementById('idee-title').value.trim();
-  if(!title) return;
-  state.ideenC++;
-  state.ideen.push({
-    id: state.ideenC,
-    kat: document.getElementById('idee-kat').value,
-    title,
-    note: document.getElementById('idee-note').value
-  });
-  ['idee-title','idee-note'].forEach(id=>document.getElementById(id).value='');
-  closeModal('modal-idee'); renderIdeen(); save();
-}
-
-let editingIdeeId = null;
-function openIdeeEdit(id){
-  const i = state.ideen.find(x=>x.id===id); if(!i) return;
-  editingIdeeId = id;
-  document.getElementById('ie-kat').value = i.kat;
-  document.getElementById('ie-title').value = i.title;
-  document.getElementById('ie-note').value = i.note||'';
-  openModal('modal-idee-edit');
-}
-function saveIdeeEdit(){
-  const i = state.ideen.find(x=>x.id===editingIdeeId); if(!i) return;
-  i.kat = document.getElementById('ie-kat').value;
-  i.title = document.getElementById('ie-title').value;
-  i.note = document.getElementById('ie-note').value;
-  closeModal('modal-idee-edit'); renderIdeen(); save(); editingIdeeId=null;
-}
-function delIdee(id){ state.ideen=state.ideen.filter(x=>x.id!==id); renderIdeen(); save(); }
 
 // Alle Funktionen global verfügbar machen (nötig weil wir jetzt ein ES-Modul sind)
 window.showTab = showTab;
@@ -1717,3 +1641,82 @@ window.setIdeenFilter = setIdeenFilter;
 </div>
 </body>
 </html>
+function renderIdeen(){
+  const board = document.getElementById('ideen-board');
+  const filterEl = document.getElementById('ideen-filter-btns');
+  if(!board) return;
+
+  // build filter buttons
+  const kats = ['Alle', ...Object.keys(IDEEN_FARBEN).filter(k => state.ideen.some(i => i.kat===k))];
+  filterEl.innerHTML = kats.map(k => `
+    <button onclick="setIdeenFilter('${k}')" style="
+      padding:5px 14px;border-radius:20px;border:none;cursor:pointer;font-size:0.82rem;font-weight:600;
+      background:${activeIdeenFilter===k?'var(--rose-dark)':'var(--cream)'};
+      color:${activeIdeenFilter===k?'white':'var(--text-light)'};
+      transition:all .2s;">
+      ${k==='Alle'?'🗂️ Alle':IDEEN_EMOJI[k]+' '+k}
+    </button>`).join('');
+
+  const filtered = activeIdeenFilter==='Alle' ? state.ideen : state.ideen.filter(i=>i.kat===activeIdeenFilter);
+
+  if(!filtered.length){
+    board.innerHTML='<div class="empty-state" style="grid-column:1/-1">Noch keine Ideen in dieser Kategorie.</div>';
+    return;
+  }
+
+  board.innerHTML = filtered.map(i => `
+    <div style="
+      background:${IDEEN_FARBEN[i.kat]||'#f5f5f5'};
+      border-radius:14px;padding:16px;position:relative;
+      box-shadow:2px 3px 10px rgba(0,0,0,0.07);
+      min-height:120px;display:flex;flex-direction:column;gap:8px;">
+      <div style="font-size:0.75rem;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;">
+        ${IDEEN_EMOJI[i.kat]||'✨'} ${i.kat}
+      </div>
+      <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--brown);line-height:1.3;">
+        ${i.title}
+      </div>
+      ${i.note ? `<div style="font-size:0.82rem;color:var(--text-light);flex:1;white-space:pre-wrap;">${i.note.replace(/
+/g,'<br>')}</div>` : ''}
+      <div style="display:flex;gap:6px;margin-top:auto;padding-top:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="openIdeeEdit(${i.id})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="delIdee(${i.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function setIdeenFilter(k){ activeIdeenFilter=k; renderIdeen(); }
+
+function addIdee(){
+  const title = document.getElementById('idee-title').value.trim();
+  if(!title) return;
+  state.ideenC++;
+  state.ideen.push({
+    id: state.ideenC,
+    kat: document.getElementById('idee-kat').value,
+    title,
+    note: document.getElementById('idee-note').value
+  });
+  ['idee-title','idee-note'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-idee'); renderIdeen(); save();
+}
+
+let editingIdeeId = null;
+function openIdeeEdit(id){
+  const i = state.ideen.find(x=>x.id===id); if(!i) return;
+  editingIdeeId = id;
+  document.getElementById('ie-kat').value = i.kat;
+  document.getElementById('ie-title').value = i.title;
+  document.getElementById('ie-note').value = i.note||'';
+  openModal('modal-idee-edit');
+}
+function saveIdeeEdit(){
+  const i = state.ideen.find(x=>x.id===editingIdeeId); if(!i) return;
+  i.kat = document.getElementById('ie-kat').value;
+  i.title = document.getElementById('ie-title').value;
+  i.note = document.getElementById('ie-note').value;
+  closeModal('modal-idee-edit'); renderIdeen(); save(); editingIdeeId=null;
+}
+function delIdee(id){ state.ideen=state.ideen.filter(x=>x.id!==id); renderIdeen(); save(); }
+
+
