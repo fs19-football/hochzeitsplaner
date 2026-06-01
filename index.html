@@ -1266,6 +1266,34 @@ function saveBudgetEdit(){
 }
 
 // --- Gäste ---
+function addMenuRowEdit(prefill){
+  const container=document.getElementById('menu-rows-edit');
+  const id='mre'+Date.now()+Math.random();
+  const div=document.createElement('div');
+  div.className='menu-item-row';
+  div.id=id;
+  div.innerHTML=`
+    <select style="flex:1">
+      ${MENU_OPTIONS.map(o=>`<option>${o}</option>`).join('')}
+    </select>
+    <input type="number" value="1" min="1" style="width:65px" placeholder="Anz."/>
+    <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕</button>
+  `;
+  container.appendChild(div);
+  if(prefill){
+    div.querySelector('select').value=prefill.menu;
+    div.querySelector('input[type=number]').value=prefill.count;
+  }
+}
+function getMenuRowsEdit(){
+  const rows=[];
+  document.querySelectorAll('#menu-rows-edit .menu-item-row').forEach(row=>{
+    const sel=row.querySelector('select');
+    const num=row.querySelector('input[type="number"]');
+    if(sel&&num)rows.push({menu:sel.value,count:parseInt(num.value)||1});
+  });
+  return rows;
+}
 function openGastEdit(id){
   const g=state.gaeste.find(x=>x.id===id); if(!g)return;
   editingGastId=id;
@@ -1275,6 +1303,12 @@ function openGastEdit(id){
   document.getElementById('ge-rsvp').value=g.rsvp||'ausstehend';
   document.getElementById('ge-hotel').value=g.hotel||'nein';
   document.getElementById('ge-note').value=g.note||'';
+  // populate menu rows
+  const container=document.getElementById('menu-rows-edit');
+  container.innerHTML='';
+  const items=g.menuItems||[];
+  if(items.length>0){ items.forEach(mi=>addMenuRowEdit(mi)); }
+  else { addMenuRowEdit(); }
   openModal('modal-gast-edit');
 }
 function saveGastEdit(){
@@ -1285,6 +1319,7 @@ function saveGastEdit(){
   g.rsvp=document.getElementById('ge-rsvp').value;
   g.hotel=document.getElementById('ge-hotel').value;
   g.note=document.getElementById('ge-note').value;
+  g.menuItems=getMenuRowsEdit();
   closeModal('modal-gast-edit'); renderGaeste(); save(); editingGastId=null;
 }
 
@@ -1374,6 +1409,7 @@ window.saveMilestoneEdit = saveMilestoneEdit;
 window.openBudgetEdit = openBudgetEdit;
 window.saveBudgetEdit = saveBudgetEdit;
 window.openGastEdit = openGastEdit;
+window.addMenuRowEdit = addMenuRowEdit;
 window.saveGastEdit = saveGastEdit;
 window.openDienstEdit = openDienstEdit;
 window.saveDienstEdit = saveDienstEdit;
@@ -1432,6 +1468,11 @@ window.saveAblaufEdit = saveAblaufEdit;
     <div class="form-row">
       <label class="form-label">Hotel gebucht?</label>
       <select id="ge-hotel"><option value="nein">Nein</option><option value="ja">Ja ✓</option><option value="nicht nötig">Nicht nötig</option></select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Menüwünsche & Unverträglichkeiten</label>
+      <div id="menu-rows-edit"></div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:6px;" onclick="addMenuRowEdit()">+ Menüoption hinzufügen</button>
     </div>
     <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="ge-note" placeholder="z.B. Allergie, Sonderwunsch..."/></div>
     <div class="modal-actions">
