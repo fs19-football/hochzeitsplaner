@@ -235,12 +235,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
       <div class="section-title">🤝 Dienstleister-Tracker</div>
       <button class="btn btn-primary" onclick="openModal('modal-dienst')">+ Dienstleister hinzufügen</button>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Kategorie</th><th>Name</th><th>Kontakt</th><th>Preis</th><th>Anzahlung</th><th>Zahlungsstatus</th><th>Vertrag</th><th>Notiz</th><th></th></tr></thead>
-        <tbody id="dienst-table"></tbody>
-      </table>
-    </div>
+    <div id="dienst-filter-btns" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;"></div>
+    <div id="dienst-cards"></div>
   </div>
 </div>
 
@@ -389,38 +385,22 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
   <div class="modal">
     <div class="modal-title">🤝 Dienstleister hinzufügen</div>
     <div class="form-row-2">
+      <div><label class="form-label">Kategorie</label><select id="d-kat"><option>Fotograf</option><option>Videograf</option><option>DJ</option><option>Band</option><option>Florist</option><option>Catering</option><option>Torte</option><option>Visagistin/Friseur</option><option>Trauredner/in</option><option>Transport/Limousine</option><option>Sonstiges</option></select></div>
       <div><label class="form-label">Name / Firma</label><input type="text" id="d-name" placeholder="Max Foto GmbH"/></div>
-      <div><label class="form-label">Kategorie</label><input type="text" id="d-kat" placeholder="z.B. DJ, Catering, Fotograf..." list="d-kat-list"/>
-        <datalist id="d-kat-list"><option>Fotograf</option><option>Videograf</option><option>DJ</option><option>Band</option><option>Florist</option><option>Catering</option><option>Torte</option><option>Visagistin/Friseur</option><option>Trauredner/in</option><option>Transport/Limousine</option><option>Sonstiges</option></datalist>
-      </div>
     </div>
     <div class="form-row-2">
-      <div><label class="form-label">Website</label><input type="text" id="d-web" placeholder="www.beispiel.de"/></div>
       <div><label class="form-label">Telefon</label><input type="tel" id="d-tel" placeholder="+49 ..."/></div>
-    </div>
-    <div class="form-row-2">
       <div><label class="form-label">E-Mail</label><input type="email" id="d-email" placeholder="mail@..."/></div>
-      <div><label class="form-label">Bewertung</label>
-        <div class="stars" id="d-stars-input" style="font-size:1.4rem;margin-top:4px;">
-          <span class="star" onclick="setDienstStarInput(1)">☆</span>
-          <span class="star" onclick="setDienstStarInput(2)">☆</span>
-          <span class="star" onclick="setDienstStarInput(3)">☆</span>
-          <span class="star" onclick="setDienstStarInput(4)">☆</span>
-          <span class="star" onclick="setDienstStarInput(5)">☆</span>
-        </div>
-        <input type="hidden" id="d-rating" value="0"/>
-      </div>
     </div>
     <div class="form-row-2">
       <div><label class="form-label">Gesamtpreis (€)</label><input type="number" id="d-price" placeholder="0"/></div>
       <div><label class="form-label">Anzahlung (€)</label><input type="number" id="d-deposit" placeholder="0"/></div>
     </div>
     <div class="form-row-2">
-      <div><label class="form-label">Zahlungsstatus</label><select id="d-status"><option value="offen">Offen</option><option value="anzahlung">Anzahlung bezahlt</option><option value="bezahlt">Vollständig bezahlt ✓</option></select></div>
       <div><label class="form-label">Vertrag</label><select id="d-contract"><option value="ausstehend">Ausstehend</option><option value="unterschrieben">Unterschrieben ✓</option></select></div>
+      <div><label class="form-label">Zahlungsstatus</label><select id="d-status"><option value="offen">Offen</option><option value="anzahlung">Anzahlung bezahlt</option><option value="bezahlt">Vollständig bezahlt ✓</option></select></div>
     </div>
-    <div class="form-row"><label class="form-label">✅ Inklusiv-Leistungen <span style="font-weight:400;font-size:0.75rem;">(Enter = neue Zeile)</span></label><textarea id="d-leistungen" rows="3" placeholder="z.B. Buffet für 120 Personen&#10;Auf- & Abbau&#10;Servicepersonal"></textarea></div>
-    <div class="form-row"><label class="form-label">📝 Notizen</label><textarea id="d-note" rows="2" placeholder="z.B. Probetermin am 01.09..."></textarea></div>
+    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="d-note" placeholder="z.B. Probetermin am..."/></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-dienst')">Abbrechen</button>
       <button class="btn btn-primary" onclick="addDienst()">Hinzufügen</button>
@@ -948,11 +928,10 @@ function delGast(id){state.gaeste=state.gaeste.filter(x=>x.id!==id);renderGaeste
 // DIENSTLEISTER
 // ============================================================
 let activeDienstFilter = 'Alle';
-
-function setDienstFilter(k){ activeDienstFilter=k; renderDienst(); }
-
 let dienstStarInputVal = 0;
 let dienstStarEditVal = 0;
+
+function setDienstFilter(k){ activeDienstFilter=k; renderDienst(); }
 
 function setDienstStarInput(v){
   dienstStarInputVal=v;
@@ -976,15 +955,9 @@ function renderDienst(){
   const cardsEl=document.getElementById('dienst-cards');
   if(!filterEl||!cardsEl)return;
 
-  // build filter buttons
   const kats=['Alle',...new Set(state.dienst.map(d=>d.kat).filter(Boolean))];
   filterEl.innerHTML=kats.map(k=>`
-    <button onclick="setDienstFilter('${k}')" style="
-      padding:6px 14px;border-radius:20px;border:none;cursor:pointer;
-      font-family:'Lato',sans-serif;font-size:0.8rem;font-weight:600;
-      background:${activeDienstFilter===k?'var(--rose)':'var(--brown-light)'};
-      color:${activeDienstFilter===k?'white':'var(--brown)'};
-      transition:all 0.2s;">${k==='Alle'?'Alle':''}${k!=='Alle'?k:''}</button>
+    <button onclick="setDienstFilter('${k}')" style="padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-family:'Lato',sans-serif;font-size:0.8rem;font-weight:600;background:${activeDienstFilter===k?'var(--rose)':'var(--brown-light)'};color:${activeDienstFilter===k?'white':'var(--brown)'};transition:all 0.2s;">${k}</button>
   `).join('');
 
   const filtered = activeDienstFilter==='Alle' ? state.dienst : state.dienst.filter(d=>d.kat===activeDienstFilter);
@@ -994,7 +967,6 @@ function renderDienst(){
     return;
   }
 
-  // sort: favoriten first
   const sorted=[...filtered].sort((a,b)=>(b.favorit?1:0)-(a.favorit?1:0));
 
   cardsEl.innerHTML=sorted.map(d=>{
@@ -1004,8 +976,7 @@ function renderDienst(){
     const contractColor=d.contract==='unterschrieben'?'var(--green)':'var(--rose-dark)';
     const contractLabel=d.contract==='unterschrieben'?'✓ Unterschrieben':'Ausstehend';
     const leistungenLines=(d.leistungen||'').split('\n').filter(l=>l.trim());
-    return `<div class="card" style="border-left:4px solid ${d.favorit?'var(--gold)':'var(--rose)'};margin-bottom:14px;position:relative;">
-      <!-- Kopf -->
+    return `<div class="card" style="border-left:4px solid ${d.favorit?'var(--gold)':'var(--rose)'};margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
         <div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
@@ -1020,39 +991,22 @@ function renderDienst(){
           </div>
         </div>
         <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
-          <button onclick="toggleDienstFav(${d.id})" style="background:${d.favorit?'var(--gold-light)':'var(--brown-light)'};border:1px solid ${d.favorit?'var(--gold)':'var(--rose-light)'};border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.85rem;" title="${d.favorit?'Favorit entfernen':'Als Favorit markieren'}">${d.favorit?'💛':'🤍'}</button>
+          <button onclick="toggleDienstFav(${d.id})" style="background:${d.favorit?'var(--gold-light)':'var(--brown-light)'};border:1px solid ${d.favorit?'var(--gold)':'var(--rose-light)'};border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.85rem;">${d.favorit?'💛':'🤍'}</button>
           <button class="btn btn-secondary btn-sm" onclick="openDienstEdit(${d.id})">✏️ Bearbeiten</button>
           <button class="btn btn-danger btn-sm" onclick="delDienst(${d.id})">✕</button>
         </div>
       </div>
-      <!-- Bewertung -->
       <div style="display:flex;align-items:center;gap:6px;margin:8px 0 4px;"><span style="font-size:0.8rem;color:var(--text-light);">Bewertung:</span><div class="stars">${stars}</div></div>
-      <!-- Info-Kacheln -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px;margin-top:9px;">
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
-          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Gesamtpreis</div>
-          <div style="font-weight:700;color:var(--brown);font-size:1rem;">${d.price?fmt(d.price):'–'}</div>
-        </div>
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
-          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Anzahlung</div>
-          <div style="font-weight:700;color:var(--brown);">${d.deposit?fmt(d.deposit):'–'}</div>
-        </div>
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
-          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Zahlung</div>
-          <div style="font-weight:700;color:${statusColor};">${statusLabel}</div>
-        </div>
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
-          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Vertrag</div>
-          <div style="font-weight:700;color:${contractColor};">${contractLabel}</div>
-        </div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Gesamtpreis</div><div style="font-weight:700;color:var(--brown);font-size:1rem;">${d.price?fmt(d.price):'–'}</div></div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Anzahlung</div><div style="font-weight:700;color:var(--brown);">${d.deposit?fmt(d.deposit):'–'}</div></div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Zahlung</div><div style="font-weight:700;color:${statusColor};">${statusLabel}</div></div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Vertrag</div><div style="font-weight:700;color:${contractColor};">${contractLabel}</div></div>
       </div>
-      <!-- Leistungen + Notizen -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:11px;">
         <div style="border-top:1px solid var(--rose-light);padding-top:8px;">
           <div style="font-size:0.78rem;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:5px;">✅ Inklusiv-Leistungen</div>
-          ${leistungenLines.length?
-            '<ul style="margin:0;padding-left:16px;font-size:0.83rem;color:var(--text);">'+leistungenLines.map(l=>`<li>${l}</li>`).join('')+'</ul>'
-            :'<span style="font-size:0.82rem;color:var(--text-light);font-style:italic;">Noch keine Angaben</span>'}
+          ${leistungenLines.length?'<ul style="margin:0;padding-left:16px;font-size:0.83rem;color:var(--text);">'+leistungenLines.map(l=>`<li>${l}</li>`).join('')+'</ul>':'<em style="font-size:0.82rem;color:var(--text-light);">Noch keine Angaben</em>'}
         </div>
         <div style="border-top:1px solid var(--rose-light);padding-top:8px;">
           <div style="font-size:0.78rem;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:5px;">📝 Notizen</div>
@@ -1067,7 +1021,7 @@ function addDienst(){
   state.dC++;
   state.dienst.push({
     id:state.dC,
-    kat:document.getElementById('d-kat').value.trim(),
+    kat:(document.getElementById('d-kat').value||'').trim(),
     name:document.getElementById('d-name').value,
     web:document.getElementById('d-web').value,
     tel:document.getElementById('d-tel').value,
@@ -1510,36 +1464,28 @@ function saveGastEdit(){
 function openDienstEdit(id){
   const d=state.dienst.find(x=>x.id===id); if(!d)return;
   editingDienstId=id;
+  document.getElementById('de-kat').value=d.kat||'Fotograf';
   document.getElementById('de-name').value=d.name||'';
-  document.getElementById('de-kat').value=d.kat||'';
-  document.getElementById('de-web').value=d.web||'';
   document.getElementById('de-tel').value=d.tel||'';
   document.getElementById('de-email').value=d.email||'';
   document.getElementById('de-price').value=d.price||0;
   document.getElementById('de-deposit').value=d.deposit||0;
   document.getElementById('de-contract').value=d.contract||'ausstehend';
   document.getElementById('de-status').value=d.status||'offen';
-  document.getElementById('de-leistungen').value=d.leistungen||'';
   document.getElementById('de-note').value=d.note||'';
-  dienstStarEditVal=d.rating||0;
-  document.getElementById('de-rating').value=dienstStarEditVal;
-  document.querySelectorAll('#de-stars-input .star').forEach((s,i)=>s.textContent=i<dienstStarEditVal?'⭐':'☆');
   openModal('modal-dienst-edit');
 }
 function saveDienstEdit(){
   const d=state.dienst.find(x=>x.id===editingDienstId); if(!d)return;
+  d.kat=document.getElementById('de-kat').value;
   d.name=document.getElementById('de-name').value;
-  d.kat=document.getElementById('de-kat').value.trim();
-  d.web=document.getElementById('de-web').value;
   d.tel=document.getElementById('de-tel').value;
   d.email=document.getElementById('de-email').value;
   d.price=parseFloat(document.getElementById('de-price').value)||0;
   d.deposit=parseFloat(document.getElementById('de-deposit').value)||0;
   d.contract=document.getElementById('de-contract').value;
   d.status=document.getElementById('de-status').value;
-  d.leistungen=document.getElementById('de-leistungen').value;
   d.note=document.getElementById('de-note').value;
-  d.rating=parseInt(document.getElementById('de-rating').value)||0;
   closeModal('modal-dienst-edit'); renderDienst(); save(); editingDienstId=null;
 }
 
@@ -1565,6 +1511,108 @@ function saveAblaufEdit(){
 
 
 // Alle Funktionen global verfügbar machen (nötig weil wir jetzt ein ES-Modul sind)
+function renderIdeen(){
+  var board = document.getElementById('ideen-board');
+  var filterEl = document.getElementById('ideen-filter-btns');
+  if(!board) return;
+
+  var kats = ['Alle'];
+  Object.keys(IDEEN_FARBEN).forEach(function(k){ if(state.ideen.some(function(i){return i.kat===k;})) kats.push(k); });
+
+  filterEl.innerHTML = '';
+  kats.forEach(function(k){
+    var btn = document.createElement('button');
+    btn.textContent = k==='Alle' ? '🗂️ Alle' : (IDEEN_EMOJI[k]||'')+ ' '+k;
+    btn.setAttribute('onclick','setIdeenFilter("'+k+'")');
+    btn.style.cssText = 'padding:5px 14px;border-radius:20px;border:none;cursor:pointer;font-size:0.82rem;font-weight:600;margin:2px;';
+    btn.style.background = activeIdeenFilter===k ? 'var(--rose-dark)' : 'var(--cream)';
+    btn.style.color = activeIdeenFilter===k ? 'white' : 'var(--text-light)';
+    filterEl.appendChild(btn);
+  });
+
+  var filtered = activeIdeenFilter==='Alle' ? state.ideen : state.ideen.filter(function(i){return i.kat===activeIdeenFilter;});
+
+  board.innerHTML = '';
+  if(!filtered.length){
+    board.innerHTML = '<div class="empty-state" style="grid-column:1/-1">Noch keine Ideen in dieser Kategorie.</div>';
+    return;
+  }
+
+  filtered.forEach(function(i){
+    var card = document.createElement('div');
+    card.style.cssText = 'background:'+(IDEEN_FARBEN[i.kat]||'#f5f5f5')+';border-radius:14px;padding:16px;box-shadow:2px 3px 10px rgba(0,0,0,0.07);min-height:120px;display:flex;flex-direction:column;gap:8px;';
+
+    var katDiv = document.createElement('div');
+    katDiv.style.cssText = 'font-size:0.75rem;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;';
+    katDiv.textContent = (IDEEN_EMOJI[i.kat]||'✨')+' '+i.kat;
+    card.appendChild(katDiv);
+
+    var titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'font-size:1rem;font-weight:700;color:#5c3d2e;line-height:1.3;';
+    titleDiv.textContent = i.title;
+    card.appendChild(titleDiv);
+
+    if(i.note){
+      var noteDiv = document.createElement('div');
+      noteDiv.style.cssText = 'font-size:0.82rem;color:var(--text-light);flex:1;white-space:pre-wrap;';
+      noteDiv.textContent = i.note;
+      card.appendChild(noteDiv);
+    }
+
+    var btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:6px;margin-top:auto;padding-top:8px;';
+
+    var editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-secondary btn-sm';
+    editBtn.textContent = '✏️';
+    editBtn.setAttribute('onclick','openIdeeEdit('+i.id+')');
+    btnRow.appendChild(editBtn);
+
+    var delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger btn-sm';
+    delBtn.textContent = '✕';
+    delBtn.setAttribute('onclick','delIdee('+i.id+')');
+    btnRow.appendChild(delBtn);
+
+    card.appendChild(btnRow);
+    board.appendChild(card);
+  });
+}
+
+function setIdeenFilter(k){ activeIdeenFilter=k; renderIdeen(); }
+
+function addIdee(){
+  const title = document.getElementById('idee-title').value.trim();
+  if(!title) return;
+  state.ideenC++;
+  state.ideen.push({
+    id: state.ideenC,
+    kat: document.getElementById('idee-kat').value,
+    title,
+    note: document.getElementById('idee-note').value
+  });
+  ['idee-title','idee-note'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-idee'); renderIdeen(); save();
+}
+
+let editingIdeeId = null;
+function openIdeeEdit(id){
+  const i = state.ideen.find(x=>x.id===id); if(!i) return;
+  editingIdeeId = id;
+  document.getElementById('ie-kat').value = i.kat;
+  document.getElementById('ie-title').value = i.title;
+  document.getElementById('ie-note').value = i.note||'';
+  openModal('modal-idee-edit');
+}
+function saveIdeeEdit(){
+  const i = state.ideen.find(x=>x.id===editingIdeeId); if(!i) return;
+  i.kat = document.getElementById('ie-kat').value;
+  i.title = document.getElementById('ie-title').value;
+  i.note = document.getElementById('ie-note').value;
+  closeModal('modal-idee-edit'); renderIdeen(); save(); editingIdeeId=null;
+}
+function delIdee(id){ state.ideen=state.ideen.filter(x=>x.id!==id); renderIdeen(); save(); }
+
 window.showTab = showTab;
 window.openModal = openModal;
 window.closeModal = closeModal;
@@ -1691,38 +1739,22 @@ window.setIdeenFilter = setIdeenFilter;
   <div class="modal">
     <div class="modal-title">✏️ Dienstleister bearbeiten</div>
     <div class="form-row-2">
+      <div><label class="form-label">Kategorie</label><select id="de-kat"><option>Fotograf</option><option>Videograf</option><option>DJ</option><option>Band</option><option>Florist</option><option>Catering</option><option>Torte</option><option>Visagistin/Friseur</option><option>Trauredner/in</option><option>Transport/Limousine</option><option>Sonstiges</option></select></div>
       <div><label class="form-label">Name / Firma</label><input type="text" id="de-name" placeholder="Max Foto GmbH"/></div>
-      <div><label class="form-label">Kategorie</label><input type="text" id="de-kat" placeholder="z.B. DJ, Catering..." list="de-kat-list"/>
-        <datalist id="de-kat-list"><option>Fotograf</option><option>Videograf</option><option>DJ</option><option>Band</option><option>Florist</option><option>Catering</option><option>Torte</option><option>Visagistin/Friseur</option><option>Trauredner/in</option><option>Transport/Limousine</option><option>Sonstiges</option></datalist>
-      </div>
     </div>
     <div class="form-row-2">
-      <div><label class="form-label">Website</label><input type="text" id="de-web" placeholder="www.beispiel.de"/></div>
       <div><label class="form-label">Telefon</label><input type="tel" id="de-tel" placeholder="+49 ..."/></div>
-    </div>
-    <div class="form-row-2">
       <div><label class="form-label">E-Mail</label><input type="email" id="de-email" placeholder="mail@..."/></div>
-      <div><label class="form-label">Bewertung</label>
-        <div class="stars" id="de-stars-input" style="font-size:1.4rem;margin-top:4px;">
-          <span class="star" onclick="setDienstStarEdit(1)">☆</span>
-          <span class="star" onclick="setDienstStarEdit(2)">☆</span>
-          <span class="star" onclick="setDienstStarEdit(3)">☆</span>
-          <span class="star" onclick="setDienstStarEdit(4)">☆</span>
-          <span class="star" onclick="setDienstStarEdit(5)">☆</span>
-        </div>
-        <input type="hidden" id="de-rating" value="0"/>
-      </div>
     </div>
     <div class="form-row-2">
       <div><label class="form-label">Gesamtpreis (€)</label><input type="number" id="de-price" placeholder="0"/></div>
       <div><label class="form-label">Anzahlung (€)</label><input type="number" id="de-deposit" placeholder="0"/></div>
     </div>
     <div class="form-row-2">
-      <div><label class="form-label">Zahlungsstatus</label><select id="de-status"><option value="offen">Offen</option><option value="anzahlung">Anzahlung bezahlt</option><option value="bezahlt">Vollständig bezahlt ✓</option></select></div>
       <div><label class="form-label">Vertrag</label><select id="de-contract"><option value="ausstehend">Ausstehend</option><option value="unterschrieben">Unterschrieben ✓</option></select></div>
+      <div><label class="form-label">Zahlungsstatus</label><select id="de-status"><option value="offen">Offen</option><option value="anzahlung">Anzahlung bezahlt</option><option value="bezahlt">Vollständig bezahlt ✓</option></select></div>
     </div>
-    <div class="form-row"><label class="form-label">✅ Inklusiv-Leistungen</label><textarea id="de-leistungen" rows="3" placeholder="z.B. Buffet für 120 Personen&#10;Auf- & Abbau"></textarea></div>
-    <div class="form-row"><label class="form-label">📝 Notizen</label><textarea id="de-note" rows="2" placeholder="z.B. Probetermin am 01.09..."></textarea></div>
+    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="de-note" placeholder="z.B. Probetermin am..."/></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-dienst-edit')">Abbrechen</button>
       <button class="btn btn-primary" onclick="saveDienstEdit()">Speichern</button>
@@ -1800,106 +1832,3 @@ window.setIdeenFilter = setIdeenFilter;
 </div>
 </body>
 </html>
-function renderIdeen(){
-  var board = document.getElementById('ideen-board');
-  var filterEl = document.getElementById('ideen-filter-btns');
-  if(!board) return;
-
-  var kats = ['Alle'];
-  Object.keys(IDEEN_FARBEN).forEach(function(k){ if(state.ideen.some(function(i){return i.kat===k;})) kats.push(k); });
-
-  filterEl.innerHTML = '';
-  kats.forEach(function(k){
-    var btn = document.createElement('button');
-    btn.textContent = k==='Alle' ? '🗂️ Alle' : (IDEEN_EMOJI[k]||'')+ ' '+k;
-    btn.setAttribute('onclick','setIdeenFilter("'+k+'")');
-    btn.style.cssText = 'padding:5px 14px;border-radius:20px;border:none;cursor:pointer;font-size:0.82rem;font-weight:600;margin:2px;';
-    btn.style.background = activeIdeenFilter===k ? 'var(--rose-dark)' : 'var(--cream)';
-    btn.style.color = activeIdeenFilter===k ? 'white' : 'var(--text-light)';
-    filterEl.appendChild(btn);
-  });
-
-  var filtered = activeIdeenFilter==='Alle' ? state.ideen : state.ideen.filter(function(i){return i.kat===activeIdeenFilter;});
-
-  board.innerHTML = '';
-  if(!filtered.length){
-    board.innerHTML = '<div class="empty-state" style="grid-column:1/-1">Noch keine Ideen in dieser Kategorie.</div>';
-    return;
-  }
-
-  filtered.forEach(function(i){
-    var card = document.createElement('div');
-    card.style.cssText = 'background:'+(IDEEN_FARBEN[i.kat]||'#f5f5f5')+';border-radius:14px;padding:16px;box-shadow:2px 3px 10px rgba(0,0,0,0.07);min-height:120px;display:flex;flex-direction:column;gap:8px;';
-
-    var katDiv = document.createElement('div');
-    katDiv.style.cssText = 'font-size:0.75rem;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;';
-    katDiv.textContent = (IDEEN_EMOJI[i.kat]||'✨')+' '+i.kat;
-    card.appendChild(katDiv);
-
-    var titleDiv = document.createElement('div');
-    titleDiv.style.cssText = 'font-size:1rem;font-weight:700;color:#5c3d2e;line-height:1.3;';
-    titleDiv.textContent = i.title;
-    card.appendChild(titleDiv);
-
-    if(i.note){
-      var noteDiv = document.createElement('div');
-      noteDiv.style.cssText = 'font-size:0.82rem;color:var(--text-light);flex:1;white-space:pre-wrap;';
-      noteDiv.textContent = i.note;
-      card.appendChild(noteDiv);
-    }
-
-    var btnRow = document.createElement('div');
-    btnRow.style.cssText = 'display:flex;gap:6px;margin-top:auto;padding-top:8px;';
-
-    var editBtn = document.createElement('button');
-    editBtn.className = 'btn btn-secondary btn-sm';
-    editBtn.textContent = '✏️';
-    editBtn.setAttribute('onclick','openIdeeEdit('+i.id+')');
-    btnRow.appendChild(editBtn);
-
-    var delBtn = document.createElement('button');
-    delBtn.className = 'btn btn-danger btn-sm';
-    delBtn.textContent = '✕';
-    delBtn.setAttribute('onclick','delIdee('+i.id+')');
-    btnRow.appendChild(delBtn);
-
-    card.appendChild(btnRow);
-    board.appendChild(card);
-  });
-}
-
-function setIdeenFilter(k){ activeIdeenFilter=k; renderIdeen(); }
-
-function addIdee(){
-  const title = document.getElementById('idee-title').value.trim();
-  if(!title) return;
-  state.ideenC++;
-  state.ideen.push({
-    id: state.ideenC,
-    kat: document.getElementById('idee-kat').value,
-    title,
-    note: document.getElementById('idee-note').value
-  });
-  ['idee-title','idee-note'].forEach(id=>document.getElementById(id).value='');
-  closeModal('modal-idee'); renderIdeen(); save();
-}
-
-let editingIdeeId = null;
-function openIdeeEdit(id){
-  const i = state.ideen.find(x=>x.id===id); if(!i) return;
-  editingIdeeId = id;
-  document.getElementById('ie-kat').value = i.kat;
-  document.getElementById('ie-title').value = i.title;
-  document.getElementById('ie-note').value = i.note||'';
-  openModal('modal-idee-edit');
-}
-function saveIdeeEdit(){
-  const i = state.ideen.find(x=>x.id===editingIdeeId); if(!i) return;
-  i.kat = document.getElementById('ie-kat').value;
-  i.title = document.getElementById('ie-title').value;
-  i.note = document.getElementById('ie-note').value;
-  closeModal('modal-idee-edit'); renderIdeen(); save(); editingIdeeId=null;
-}
-function delIdee(id){ state.ideen=state.ideen.filter(x=>x.id!==id); renderIdeen(); save(); }
-
-
