@@ -389,22 +389,38 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
   <div class="modal">
     <div class="modal-title">🤝 Dienstleister hinzufügen</div>
     <div class="form-row-2">
-      <div><label class="form-label">Kategorie</label><select id="d-kat"><option>Fotograf</option><option>Videograf</option><option>DJ</option><option>Band</option><option>Florist</option><option>Catering</option><option>Torte</option><option>Visagistin/Friseur</option><option>Trauredner/in</option><option>Transport/Limousine</option><option>Sonstiges</option></select></div>
       <div><label class="form-label">Name / Firma</label><input type="text" id="d-name" placeholder="Max Foto GmbH"/></div>
+      <div><label class="form-label">Kategorie</label><input type="text" id="d-kat" placeholder="z.B. DJ, Catering, Fotograf..." list="d-kat-list"/>
+        <datalist id="d-kat-list"><option>Fotograf</option><option>Videograf</option><option>DJ</option><option>Band</option><option>Florist</option><option>Catering</option><option>Torte</option><option>Visagistin/Friseur</option><option>Trauredner/in</option><option>Transport/Limousine</option><option>Sonstiges</option></datalist>
+      </div>
     </div>
     <div class="form-row-2">
+      <div><label class="form-label">Website</label><input type="text" id="d-web" placeholder="www.beispiel.de"/></div>
       <div><label class="form-label">Telefon</label><input type="tel" id="d-tel" placeholder="+49 ..."/></div>
+    </div>
+    <div class="form-row-2">
       <div><label class="form-label">E-Mail</label><input type="email" id="d-email" placeholder="mail@..."/></div>
+      <div><label class="form-label">Bewertung</label>
+        <div class="stars" id="d-stars-input" style="font-size:1.4rem;margin-top:4px;">
+          <span class="star" onclick="setDienstStarInput(1)">☆</span>
+          <span class="star" onclick="setDienstStarInput(2)">☆</span>
+          <span class="star" onclick="setDienstStarInput(3)">☆</span>
+          <span class="star" onclick="setDienstStarInput(4)">☆</span>
+          <span class="star" onclick="setDienstStarInput(5)">☆</span>
+        </div>
+        <input type="hidden" id="d-rating" value="0"/>
+      </div>
     </div>
     <div class="form-row-2">
       <div><label class="form-label">Gesamtpreis (€)</label><input type="number" id="d-price" placeholder="0"/></div>
       <div><label class="form-label">Anzahlung (€)</label><input type="number" id="d-deposit" placeholder="0"/></div>
     </div>
     <div class="form-row-2">
-      <div><label class="form-label">Vertrag</label><select id="d-contract"><option value="ausstehend">Ausstehend</option><option value="unterschrieben">Unterschrieben ✓</option></select></div>
       <div><label class="form-label">Zahlungsstatus</label><select id="d-status"><option value="offen">Offen</option><option value="anzahlung">Anzahlung bezahlt</option><option value="bezahlt">Vollständig bezahlt ✓</option></select></div>
+      <div><label class="form-label">Vertrag</label><select id="d-contract"><option value="ausstehend">Ausstehend</option><option value="unterschrieben">Unterschrieben ✓</option></select></div>
     </div>
-    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="d-note" placeholder="z.B. Probetermin am..."/></div>
+    <div class="form-row"><label class="form-label">✅ Inklusiv-Leistungen <span style="font-weight:400;font-size:0.75rem;">(Enter = neue Zeile)</span></label><textarea id="d-leistungen" rows="3" placeholder="z.B. Buffet für 120 Personen&#10;Auf- & Abbau&#10;Servicepersonal"></textarea></div>
+    <div class="form-row"><label class="form-label">📝 Notizen</label><textarea id="d-note" rows="2" placeholder="z.B. Probetermin am 01.09..."></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-dienst')">Abbrechen</button>
       <button class="btn btn-primary" onclick="addDienst()">Hinzufügen</button>
@@ -931,30 +947,144 @@ function delGast(id){state.gaeste=state.gaeste.filter(x=>x.id!==id);renderGaeste
 // ============================================================
 // DIENSTLEISTER
 // ============================================================
-function renderDienst(){
-  const tbody=document.getElementById('dienst-table');
-  if(!state.dienst.length){tbody.innerHTML='<tr><td colspan="9" class="empty-state">Noch keine Dienstleister.</td></tr>';return;}
-  tbody.innerHTML=state.dienst.map(d=>`<tr>
-    <td><strong>${d.kat}</strong></td>
-    <td>${d.name}</td>
-    <td style="font-size:0.78rem">${d.tel?'📞 '+d.tel+'<br>':''}${d.email?'✉️ '+d.email:''}</td>
-    <td>${d.price?fmt(d.price):'–'}</td>
-    <td>${d.deposit?fmt(d.deposit):'–'}</td>
-    <td><select onchange="updDienst(${d.id},'status',this.value)" style="width:auto">
-      <option ${d.status==='offen'?'selected':''} value="offen">Offen</option>
-      <option ${d.status==='anzahlung'?'selected':''} value="anzahlung">Anzahlung ✓</option>
-      <option ${d.status==='bezahlt'?'selected':''} value="bezahlt">Bezahlt ✓</option></select></td>
-    <td><select onchange="updDienst(${d.id},'contract',this.value)" style="width:auto">
-      <option ${d.contract==='ausstehend'?'selected':''} value="ausstehend">Ausstehend</option>
-      <option ${d.contract==='unterschrieben'?'selected':''} value="unterschrieben">Unterschrieben ✓</option></select></td>
-    <td><input type="text" value="${d.note||''}" style="width:110px" onchange="updDienst(${d.id},'note',this.value)" placeholder="Notiz..."/></td>
-    <td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="openDienstEdit(${d.id})">✏️</button> <button class="btn btn-danger btn-sm" onclick="delDienst(${d.id})">✕</button></td>
-  </tr>`).join('');
+let activeDienstFilter = 'Alle';
+
+function setDienstFilter(k){ activeDienstFilter=k; renderDienst(); }
+
+let dienstStarInputVal = 0;
+let dienstStarEditVal = 0;
+
+function setDienstStarInput(v){
+  dienstStarInputVal=v;
+  document.getElementById('d-rating').value=v;
+  document.querySelectorAll('#d-stars-input .star').forEach((s,i)=>s.textContent=i<v?'⭐':'☆');
 }
+function setDienstStarEdit(v){
+  dienstStarEditVal=v;
+  document.getElementById('de-rating').value=v;
+  document.querySelectorAll('#de-stars-input .star').forEach((s,i)=>s.textContent=i<v?'⭐':'☆');
+}
+function setDienstRating(id,v){
+  const d=state.dienst.find(x=>x.id===id);if(d){d.rating=v;renderDienst();save();}
+}
+function toggleDienstFav(id){
+  const d=state.dienst.find(x=>x.id===id);if(d){d.favorit=!d.favorit;renderDienst();save();}
+}
+
+function renderDienst(){
+  const filterEl=document.getElementById('dienst-filter-btns');
+  const cardsEl=document.getElementById('dienst-cards');
+  if(!filterEl||!cardsEl)return;
+
+  // build filter buttons
+  const kats=['Alle',...new Set(state.dienst.map(d=>d.kat).filter(Boolean))];
+  filterEl.innerHTML=kats.map(k=>`
+    <button onclick="setDienstFilter('${k}')" style="
+      padding:6px 14px;border-radius:20px;border:none;cursor:pointer;
+      font-family:'Lato',sans-serif;font-size:0.8rem;font-weight:600;
+      background:${activeDienstFilter===k?'var(--rose)':'var(--brown-light)'};
+      color:${activeDienstFilter===k?'white':'var(--brown)'};
+      transition:all 0.2s;">${k==='Alle'?'Alle':''}${k!=='Alle'?k:''}</button>
+  `).join('');
+
+  const filtered = activeDienstFilter==='Alle' ? state.dienst : state.dienst.filter(d=>d.kat===activeDienstFilter);
+
+  if(!filtered.length){
+    cardsEl.innerHTML='<div class="empty-state">'+(state.dienst.length?'Keine Dienstleister in dieser Kategorie.':'Noch keine Dienstleister hinzugefügt.')+'</div>';
+    return;
+  }
+
+  // sort: favoriten first
+  const sorted=[...filtered].sort((a,b)=>(b.favorit?1:0)-(a.favorit?1:0));
+
+  cardsEl.innerHTML=sorted.map(d=>{
+    const stars=[1,2,3,4,5].map(s=>`<span class="star" onclick="setDienstRating(${d.id},${s})" style="font-size:1rem;">${s<=(d.rating||0)?'⭐':'☆'}</span>`).join('');
+    const statusColor=d.status==='bezahlt'?'var(--green)':d.status==='anzahlung'?'var(--gold)':'var(--rose-dark)';
+    const statusLabel=d.status==='bezahlt'?'✓ Bezahlt':d.status==='anzahlung'?'Anzahlung ✓':'Offen';
+    const contractColor=d.contract==='unterschrieben'?'var(--green)':'var(--rose-dark)';
+    const contractLabel=d.contract==='unterschrieben'?'✓ Unterschrieben':'Ausstehend';
+    const leistungenLines=(d.leistungen||'').split('\n').filter(l=>l.trim());
+    return `<div class="card" style="border-left:4px solid ${d.favorit?'var(--gold)':'var(--rose)'};margin-bottom:14px;position:relative;">
+      <!-- Kopf -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--brown);font-weight:700;">${d.name||'–'}</div>
+            ${d.favorit?'<span style="background:var(--gold-light);color:var(--brown);border:1px solid var(--gold);border-radius:20px;padding:2px 9px;font-size:0.73rem;font-weight:700;">⭐ Favorit</span>':''}
+          </div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:5px;font-size:0.8rem;color:var(--text-light);">
+            <span>📂 ${d.kat||'–'}</span>
+            ${d.web?`<a href="https://${(d.web||'').replace(/^https?:\/\//,'')}" target="_blank" style="color:var(--rose-dark);text-decoration:none;">🌐 ${d.web}</a>`:''}
+            ${d.tel?`<span>📞 ${d.tel}</span>`:''}
+            ${d.email?`<span>✉️ ${d.email}</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+          <button onclick="toggleDienstFav(${d.id})" style="background:${d.favorit?'var(--gold-light)':'var(--brown-light)'};border:1px solid ${d.favorit?'var(--gold)':'var(--rose-light)'};border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.85rem;" title="${d.favorit?'Favorit entfernen':'Als Favorit markieren'}">${d.favorit?'💛':'🤍'}</button>
+          <button class="btn btn-secondary btn-sm" onclick="openDienstEdit(${d.id})">✏️ Bearbeiten</button>
+          <button class="btn btn-danger btn-sm" onclick="delDienst(${d.id})">✕</button>
+        </div>
+      </div>
+      <!-- Bewertung -->
+      <div style="display:flex;align-items:center;gap:6px;margin:8px 0 4px;"><span style="font-size:0.8rem;color:var(--text-light);">Bewertung:</span><div class="stars">${stars}</div></div>
+      <!-- Info-Kacheln -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px;margin-top:9px;">
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
+          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Gesamtpreis</div>
+          <div style="font-weight:700;color:var(--brown);font-size:1rem;">${d.price?fmt(d.price):'–'}</div>
+        </div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
+          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Anzahlung</div>
+          <div style="font-weight:700;color:var(--brown);">${d.deposit?fmt(d.deposit):'–'}</div>
+        </div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
+          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Zahlung</div>
+          <div style="font-weight:700;color:${statusColor};">${statusLabel}</div>
+        </div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
+          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Vertrag</div>
+          <div style="font-weight:700;color:${contractColor};">${contractLabel}</div>
+        </div>
+      </div>
+      <!-- Leistungen + Notizen -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:11px;">
+        <div style="border-top:1px solid var(--rose-light);padding-top:8px;">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:5px;">✅ Inklusiv-Leistungen</div>
+          ${leistungenLines.length?
+            '<ul style="margin:0;padding-left:16px;font-size:0.83rem;color:var(--text);">'+leistungenLines.map(l=>`<li>${l}</li>`).join('')+'</ul>'
+            :'<span style="font-size:0.82rem;color:var(--text-light);font-style:italic;">Noch keine Angaben</span>'}
+        </div>
+        <div style="border-top:1px solid var(--rose-light);padding-top:8px;">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:5px;">📝 Notizen</div>
+          <div style="font-size:0.83rem;color:var(--text);">${d.note?(d.note.replace(/\n/g,'<br>')):'<em style="color:var(--text-light);">Keine Notizen</em>'}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function addDienst(){
   state.dC++;
-  state.dienst.push({id:state.dC,kat:document.getElementById('d-kat').value,name:document.getElementById('d-name').value,tel:document.getElementById('d-tel').value,email:document.getElementById('d-email').value,price:parseFloat(document.getElementById('d-price').value)||0,deposit:parseFloat(document.getElementById('d-deposit').value)||0,contract:document.getElementById('d-contract').value,status:document.getElementById('d-status').value,note:document.getElementById('d-note').value});
-  ['d-name','d-tel','d-email','d-price','d-deposit','d-note'].forEach(id=>document.getElementById(id).value='');
+  state.dienst.push({
+    id:state.dC,
+    kat:document.getElementById('d-kat').value.trim(),
+    name:document.getElementById('d-name').value,
+    web:document.getElementById('d-web').value,
+    tel:document.getElementById('d-tel').value,
+    email:document.getElementById('d-email').value,
+    price:parseFloat(document.getElementById('d-price').value)||0,
+    deposit:parseFloat(document.getElementById('d-deposit').value)||0,
+    contract:document.getElementById('d-contract').value,
+    status:document.getElementById('d-status').value,
+    leistungen:document.getElementById('d-leistungen').value,
+    note:document.getElementById('d-note').value,
+    rating:parseInt(document.getElementById('d-rating').value)||0,
+    favorit:false
+  });
+  ['d-name','d-kat','d-web','d-tel','d-email','d-price','d-deposit','d-leistungen','d-note'].forEach(id=>document.getElementById(id).value='');
+  dienstStarInputVal=0;
+  document.getElementById('d-rating').value=0;
+  document.querySelectorAll('#d-stars-input .star').forEach(s=>s.textContent='☆');
   closeModal('modal-dienst');renderDienst();save();
 }
 function updDienst(id,f,v){const d=state.dienst.find(x=>x.id===id);if(d){d[f]=v;renderDienst();save();}}
@@ -1380,28 +1510,36 @@ function saveGastEdit(){
 function openDienstEdit(id){
   const d=state.dienst.find(x=>x.id===id); if(!d)return;
   editingDienstId=id;
-  document.getElementById('de-kat').value=d.kat||'Fotograf';
   document.getElementById('de-name').value=d.name||'';
+  document.getElementById('de-kat').value=d.kat||'';
+  document.getElementById('de-web').value=d.web||'';
   document.getElementById('de-tel').value=d.tel||'';
   document.getElementById('de-email').value=d.email||'';
   document.getElementById('de-price').value=d.price||0;
   document.getElementById('de-deposit').value=d.deposit||0;
   document.getElementById('de-contract').value=d.contract||'ausstehend';
   document.getElementById('de-status').value=d.status||'offen';
+  document.getElementById('de-leistungen').value=d.leistungen||'';
   document.getElementById('de-note').value=d.note||'';
+  dienstStarEditVal=d.rating||0;
+  document.getElementById('de-rating').value=dienstStarEditVal;
+  document.querySelectorAll('#de-stars-input .star').forEach((s,i)=>s.textContent=i<dienstStarEditVal?'⭐':'☆');
   openModal('modal-dienst-edit');
 }
 function saveDienstEdit(){
   const d=state.dienst.find(x=>x.id===editingDienstId); if(!d)return;
-  d.kat=document.getElementById('de-kat').value;
   d.name=document.getElementById('de-name').value;
+  d.kat=document.getElementById('de-kat').value.trim();
+  d.web=document.getElementById('de-web').value;
   d.tel=document.getElementById('de-tel').value;
   d.email=document.getElementById('de-email').value;
   d.price=parseFloat(document.getElementById('de-price').value)||0;
   d.deposit=parseFloat(document.getElementById('de-deposit').value)||0;
   d.contract=document.getElementById('de-contract').value;
   d.status=document.getElementById('de-status').value;
+  d.leistungen=document.getElementById('de-leistungen').value;
   d.note=document.getElementById('de-note').value;
+  d.rating=parseInt(document.getElementById('de-rating').value)||0;
   closeModal('modal-dienst-edit'); renderDienst(); save(); editingDienstId=null;
 }
 
@@ -1469,8 +1607,199 @@ window.addMenuRowEdit = addMenuRowEdit;
 window.saveGastEdit = saveGastEdit;
 window.openDienstEdit = openDienstEdit;
 window.saveDienstEdit = saveDienstEdit;
+window.setDienstFilter = setDienstFilter;
+window.setDienstStarInput = setDienstStarInput;
+window.setDienstStarEdit = setDienstStarEdit;
+window.setDienstRating = setDienstRating;
+window.toggleDienstFav = toggleDienstFav;
 window.openAblaufEdit = openAblaufEdit;
 window.saveAblaufEdit = saveAblaufEdit;
+window.addIdee = addIdee;
+window.openIdeeEdit = openIdeeEdit;
+window.saveIdeeEdit = saveIdeeEdit;
+window.delIdee = delIdee;
+window.setIdeenFilter = setIdeenFilter;
+</script>
+
+<!-- Meilenstein bearbeiten -->
+<div class="modal-bg" id="modal-milestone-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Meilenstein bearbeiten</div>
+    <div class="form-row"><label class="form-label">Aufgabe</label><input type="text" id="mse-title" placeholder="z.B. Location buchen"/></div>
+    <div class="form-row-2">
+      <div><label class="form-label">Bis wann?</label><input type="date" id="mse-date"/></div>
+      <div><label class="form-label">Priorität</label><select id="mse-prio"><option value="normal">Normal</option><option value="urgent">Dringend ⚠️</option></select></div>
+    </div>
+    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="mse-note" placeholder="Optional..."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-milestone-edit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveMilestoneEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Budget bearbeiten -->
+<div class="modal-bg" id="modal-budget-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Kostenposition bearbeiten</div>
+    <div class="form-row"><label class="form-label">Kategorie</label>
+      <select id="be-kat"><option>Location</option><option>Catering</option><option>Outfit (Braut)</option><option>Outfit (Bräutigam)</option><option>Fotograf</option><option>Videograf</option><option>DJ / Musik</option><option>Florist / Deko</option><option>Torte</option><option>Einladungen</option><option>Transport</option><option>Ringe</option><option>Flitterwochen</option><option>Sonstiges</option></select>
+    </div>
+    <div class="form-row"><label class="form-label">Beschreibung</label><input type="text" id="be-desc" placeholder="z.B. Anzahlung Location XY"/></div>
+    <div class="form-row-2">
+      <div><label class="form-label">Geplant (€)</label><input type="number" id="be-plan" placeholder="0"/></div>
+      <div><label class="form-label">Bezahlt (€)</label><input type="number" id="be-paid" placeholder="0"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-budget-edit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveBudgetEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gast bearbeiten -->
+<div class="modal-bg" id="modal-gast-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Gast bearbeiten</div>
+    <div class="form-row-2">
+      <div><label class="form-label">Name / Gruppe</label><input type="text" id="ge-name" placeholder="Fam. Schmidt"/></div>
+      <div><label class="form-label">Anzahl Personen</label><input type="number" id="ge-count" value="1" min="1"/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Einladung verschickt?</label><select id="ge-invite"><option value="nein">Nein</option><option value="ja">Ja ✓</option></select></div>
+      <div><label class="form-label">Zusage</label><select id="ge-rsvp"><option value="ausstehend">Ausstehend</option><option value="zugesagt">Zugesagt ✓</option><option value="abgesagt">Abgesagt ✗</option></select></div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Hotel gebucht?</label>
+      <select id="ge-hotel"><option value="nein">Nein</option><option value="ja">Ja ✓</option><option value="nicht nötig">Nicht nötig</option></select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Menüwünsche & Unverträglichkeiten</label>
+      <div id="menu-rows-edit"></div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:6px;" onclick="addMenuRowEdit()">+ Menüoption hinzufügen</button>
+    </div>
+    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="ge-note" placeholder="z.B. Allergie, Sonderwunsch..."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-gast-edit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveGastEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dienstleister bearbeiten -->
+<div class="modal-bg" id="modal-dienst-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Dienstleister bearbeiten</div>
+    <div class="form-row-2">
+      <div><label class="form-label">Name / Firma</label><input type="text" id="de-name" placeholder="Max Foto GmbH"/></div>
+      <div><label class="form-label">Kategorie</label><input type="text" id="de-kat" placeholder="z.B. DJ, Catering..." list="de-kat-list"/>
+        <datalist id="de-kat-list"><option>Fotograf</option><option>Videograf</option><option>DJ</option><option>Band</option><option>Florist</option><option>Catering</option><option>Torte</option><option>Visagistin/Friseur</option><option>Trauredner/in</option><option>Transport/Limousine</option><option>Sonstiges</option></datalist>
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Website</label><input type="text" id="de-web" placeholder="www.beispiel.de"/></div>
+      <div><label class="form-label">Telefon</label><input type="tel" id="de-tel" placeholder="+49 ..."/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">E-Mail</label><input type="email" id="de-email" placeholder="mail@..."/></div>
+      <div><label class="form-label">Bewertung</label>
+        <div class="stars" id="de-stars-input" style="font-size:1.4rem;margin-top:4px;">
+          <span class="star" onclick="setDienstStarEdit(1)">☆</span>
+          <span class="star" onclick="setDienstStarEdit(2)">☆</span>
+          <span class="star" onclick="setDienstStarEdit(3)">☆</span>
+          <span class="star" onclick="setDienstStarEdit(4)">☆</span>
+          <span class="star" onclick="setDienstStarEdit(5)">☆</span>
+        </div>
+        <input type="hidden" id="de-rating" value="0"/>
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Gesamtpreis (€)</label><input type="number" id="de-price" placeholder="0"/></div>
+      <div><label class="form-label">Anzahlung (€)</label><input type="number" id="de-deposit" placeholder="0"/></div>
+    </div>
+    <div class="form-row-2">
+      <div><label class="form-label">Zahlungsstatus</label><select id="de-status"><option value="offen">Offen</option><option value="anzahlung">Anzahlung bezahlt</option><option value="bezahlt">Vollständig bezahlt ✓</option></select></div>
+      <div><label class="form-label">Vertrag</label><select id="de-contract"><option value="ausstehend">Ausstehend</option><option value="unterschrieben">Unterschrieben ✓</option></select></div>
+    </div>
+    <div class="form-row"><label class="form-label">✅ Inklusiv-Leistungen</label><textarea id="de-leistungen" rows="3" placeholder="z.B. Buffet für 120 Personen&#10;Auf- & Abbau"></textarea></div>
+    <div class="form-row"><label class="form-label">📝 Notizen</label><textarea id="de-note" rows="2" placeholder="z.B. Probetermin am 01.09..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-dienst-edit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveDienstEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tagesablauf bearbeiten -->
+<div class="modal-bg" id="modal-ablauf-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Ablaufpunkt bearbeiten</div>
+    <div class="form-row-2">
+      <div><label class="form-label">Uhrzeit</label><input type="text" id="ae-time" placeholder="14:30"/></div>
+      <div><label class="form-label">Emoji</label><input type="text" id="ae-emoji" placeholder="💒"/></div>
+    </div>
+    <div class="form-row"><label class="form-label">Programmpunkt</label><input type="text" id="ae-title" placeholder="Trauung beginnt"/></div>
+    <div class="form-row"><label class="form-label">Details</label><input type="text" id="ae-note" placeholder="Optional..."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-ablauf-edit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveAblaufEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Idee hinzufügen -->
+<div class="modal-bg" id="modal-idee">
+  <div class="modal">
+    <div class="modal-title">💡 Idee hinzufügen</div>
+    <div class="form-row">
+      <label class="form-label">Kategorie</label>
+      <select id="idee-kat">
+        <option value="Deko">🌸 Deko</option>
+        <option value="Essen & Trinken">🍽️ Essen & Trinken</option>
+        <option value="Zeremonie">💒 Zeremonie</option>
+        <option value="Musik">🎵 Musik</option>
+        <option value="Outfit">👗 Outfit</option>
+        <option value="Fotos">📷 Fotos</option>
+        <option value="Gäste">👥 Gäste</option>
+        <option value="Sonstiges">✨ Sonstiges</option>
+      </select>
+    </div>
+    <div class="form-row"><label class="form-label">Titel</label><input type="text" id="idee-title" placeholder="z.B. Lichterketten am Eingang"/></div>
+    <div class="form-row"><label class="form-label">Beschreibung / Notiz</label><textarea id="idee-note" rows="3" placeholder="Details, Links, Inspiration..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-idee')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="addIdee()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Idee bearbeiten -->
+<div class="modal-bg" id="modal-idee-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Idee bearbeiten</div>
+    <div class="form-row">
+      <label class="form-label">Kategorie</label>
+      <select id="ie-kat">
+        <option value="Deko">🌸 Deko</option>
+        <option value="Essen & Trinken">🍽️ Essen & Trinken</option>
+        <option value="Zeremonie">💒 Zeremonie</option>
+        <option value="Musik">🎵 Musik</option>
+        <option value="Outfit">👗 Outfit</option>
+        <option value="Fotos">📷 Fotos</option>
+        <option value="Gäste">👥 Gäste</option>
+        <option value="Sonstiges">✨ Sonstiges</option>
+      </select>
+    </div>
+    <div class="form-row"><label class="form-label">Titel</label><input type="text" id="ie-title" placeholder="z.B. Lichterketten am Eingang"/></div>
+    <div class="form-row"><label class="form-label">Beschreibung / Notiz</label><textarea id="ie-note" rows="3" placeholder="Details, Links, Inspiration..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-idee-edit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveIdeeEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
 function renderIdeen(){
   var board = document.getElementById('ideen-board');
   var filterEl = document.getElementById('ideen-filter-btns');
@@ -1574,174 +1903,3 @@ function saveIdeeEdit(){
 function delIdee(id){ state.ideen=state.ideen.filter(x=>x.id!==id); renderIdeen(); save(); }
 
 
-
-window.addIdee = addIdee;
-window.openIdeeEdit = openIdeeEdit;
-window.saveIdeeEdit = saveIdeeEdit;
-window.delIdee = delIdee;
-window.setIdeenFilter = setIdeenFilter;
-</script>
-
-<!-- Meilenstein bearbeiten -->
-<div class="modal-bg" id="modal-milestone-edit">
-  <div class="modal">
-    <div class="modal-title">✏️ Meilenstein bearbeiten</div>
-    <div class="form-row"><label class="form-label">Aufgabe</label><input type="text" id="mse-title" placeholder="z.B. Location buchen"/></div>
-    <div class="form-row-2">
-      <div><label class="form-label">Bis wann?</label><input type="date" id="mse-date"/></div>
-      <div><label class="form-label">Priorität</label><select id="mse-prio"><option value="normal">Normal</option><option value="urgent">Dringend ⚠️</option></select></div>
-    </div>
-    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="mse-note" placeholder="Optional..."/></div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('modal-milestone-edit')">Abbrechen</button>
-      <button class="btn btn-primary" onclick="saveMilestoneEdit()">Speichern</button>
-    </div>
-  </div>
-</div>
-
-<!-- Budget bearbeiten -->
-<div class="modal-bg" id="modal-budget-edit">
-  <div class="modal">
-    <div class="modal-title">✏️ Kostenposition bearbeiten</div>
-    <div class="form-row"><label class="form-label">Kategorie</label>
-      <select id="be-kat"><option>Location</option><option>Catering</option><option>Outfit (Braut)</option><option>Outfit (Bräutigam)</option><option>Fotograf</option><option>Videograf</option><option>DJ / Musik</option><option>Florist / Deko</option><option>Torte</option><option>Einladungen</option><option>Transport</option><option>Ringe</option><option>Flitterwochen</option><option>Sonstiges</option></select>
-    </div>
-    <div class="form-row"><label class="form-label">Beschreibung</label><input type="text" id="be-desc" placeholder="z.B. Anzahlung Location XY"/></div>
-    <div class="form-row-2">
-      <div><label class="form-label">Geplant (€)</label><input type="number" id="be-plan" placeholder="0"/></div>
-      <div><label class="form-label">Bezahlt (€)</label><input type="number" id="be-paid" placeholder="0"/></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('modal-budget-edit')">Abbrechen</button>
-      <button class="btn btn-primary" onclick="saveBudgetEdit()">Speichern</button>
-    </div>
-  </div>
-</div>
-
-<!-- Gast bearbeiten -->
-<div class="modal-bg" id="modal-gast-edit">
-  <div class="modal">
-    <div class="modal-title">✏️ Gast bearbeiten</div>
-    <div class="form-row-2">
-      <div><label class="form-label">Name / Gruppe</label><input type="text" id="ge-name" placeholder="Fam. Schmidt"/></div>
-      <div><label class="form-label">Anzahl Personen</label><input type="number" id="ge-count" value="1" min="1"/></div>
-    </div>
-    <div class="form-row-2">
-      <div><label class="form-label">Einladung verschickt?</label><select id="ge-invite"><option value="nein">Nein</option><option value="ja">Ja ✓</option></select></div>
-      <div><label class="form-label">Zusage</label><select id="ge-rsvp"><option value="ausstehend">Ausstehend</option><option value="zugesagt">Zugesagt ✓</option><option value="abgesagt">Abgesagt ✗</option></select></div>
-    </div>
-    <div class="form-row">
-      <label class="form-label">Hotel gebucht?</label>
-      <select id="ge-hotel"><option value="nein">Nein</option><option value="ja">Ja ✓</option><option value="nicht nötig">Nicht nötig</option></select>
-    </div>
-    <div class="form-row">
-      <label class="form-label">Menüwünsche & Unverträglichkeiten</label>
-      <div id="menu-rows-edit"></div>
-      <button class="btn btn-secondary btn-sm" style="margin-top:6px;" onclick="addMenuRowEdit()">+ Menüoption hinzufügen</button>
-    </div>
-    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="ge-note" placeholder="z.B. Allergie, Sonderwunsch..."/></div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('modal-gast-edit')">Abbrechen</button>
-      <button class="btn btn-primary" onclick="saveGastEdit()">Speichern</button>
-    </div>
-  </div>
-</div>
-
-<!-- Dienstleister bearbeiten -->
-<div class="modal-bg" id="modal-dienst-edit">
-  <div class="modal">
-    <div class="modal-title">✏️ Dienstleister bearbeiten</div>
-    <div class="form-row-2">
-      <div><label class="form-label">Kategorie</label><select id="de-kat"><option>Fotograf</option><option>Videograf</option><option>DJ</option><option>Band</option><option>Florist</option><option>Catering</option><option>Torte</option><option>Visagistin/Friseur</option><option>Trauredner/in</option><option>Transport/Limousine</option><option>Sonstiges</option></select></div>
-      <div><label class="form-label">Name / Firma</label><input type="text" id="de-name" placeholder="Max Foto GmbH"/></div>
-    </div>
-    <div class="form-row-2">
-      <div><label class="form-label">Telefon</label><input type="tel" id="de-tel" placeholder="+49 ..."/></div>
-      <div><label class="form-label">E-Mail</label><input type="email" id="de-email" placeholder="mail@..."/></div>
-    </div>
-    <div class="form-row-2">
-      <div><label class="form-label">Gesamtpreis (€)</label><input type="number" id="de-price" placeholder="0"/></div>
-      <div><label class="form-label">Anzahlung (€)</label><input type="number" id="de-deposit" placeholder="0"/></div>
-    </div>
-    <div class="form-row-2">
-      <div><label class="form-label">Vertrag</label><select id="de-contract"><option value="ausstehend">Ausstehend</option><option value="unterschrieben">Unterschrieben ✓</option></select></div>
-      <div><label class="form-label">Zahlungsstatus</label><select id="de-status"><option value="offen">Offen</option><option value="anzahlung">Anzahlung bezahlt</option><option value="bezahlt">Vollständig bezahlt ✓</option></select></div>
-    </div>
-    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="de-note" placeholder="z.B. Probetermin am..."/></div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('modal-dienst-edit')">Abbrechen</button>
-      <button class="btn btn-primary" onclick="saveDienstEdit()">Speichern</button>
-    </div>
-  </div>
-</div>
-
-<!-- Tagesablauf bearbeiten -->
-<div class="modal-bg" id="modal-ablauf-edit">
-  <div class="modal">
-    <div class="modal-title">✏️ Ablaufpunkt bearbeiten</div>
-    <div class="form-row-2">
-      <div><label class="form-label">Uhrzeit</label><input type="text" id="ae-time" placeholder="14:30"/></div>
-      <div><label class="form-label">Emoji</label><input type="text" id="ae-emoji" placeholder="💒"/></div>
-    </div>
-    <div class="form-row"><label class="form-label">Programmpunkt</label><input type="text" id="ae-title" placeholder="Trauung beginnt"/></div>
-    <div class="form-row"><label class="form-label">Details</label><input type="text" id="ae-note" placeholder="Optional..."/></div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('modal-ablauf-edit')">Abbrechen</button>
-      <button class="btn btn-primary" onclick="saveAblaufEdit()">Speichern</button>
-    </div>
-  </div>
-</div>
-
-<!-- Idee hinzufügen -->
-<div class="modal-bg" id="modal-idee">
-  <div class="modal">
-    <div class="modal-title">💡 Idee hinzufügen</div>
-    <div class="form-row">
-      <label class="form-label">Kategorie</label>
-      <select id="idee-kat">
-        <option value="Deko">🌸 Deko</option>
-        <option value="Essen & Trinken">🍽️ Essen & Trinken</option>
-        <option value="Zeremonie">💒 Zeremonie</option>
-        <option value="Musik">🎵 Musik</option>
-        <option value="Outfit">👗 Outfit</option>
-        <option value="Fotos">📷 Fotos</option>
-        <option value="Gäste">👥 Gäste</option>
-        <option value="Sonstiges">✨ Sonstiges</option>
-      </select>
-    </div>
-    <div class="form-row"><label class="form-label">Titel</label><input type="text" id="idee-title" placeholder="z.B. Lichterketten am Eingang"/></div>
-    <div class="form-row"><label class="form-label">Beschreibung / Notiz</label><textarea id="idee-note" rows="3" placeholder="Details, Links, Inspiration..."></textarea></div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('modal-idee')">Abbrechen</button>
-      <button class="btn btn-primary" onclick="addIdee()">Hinzufügen</button>
-    </div>
-  </div>
-</div>
-
-<!-- Idee bearbeiten -->
-<div class="modal-bg" id="modal-idee-edit">
-  <div class="modal">
-    <div class="modal-title">✏️ Idee bearbeiten</div>
-    <div class="form-row">
-      <label class="form-label">Kategorie</label>
-      <select id="ie-kat">
-        <option value="Deko">🌸 Deko</option>
-        <option value="Essen & Trinken">🍽️ Essen & Trinken</option>
-        <option value="Zeremonie">💒 Zeremonie</option>
-        <option value="Musik">🎵 Musik</option>
-        <option value="Outfit">👗 Outfit</option>
-        <option value="Fotos">📷 Fotos</option>
-        <option value="Gäste">👥 Gäste</option>
-        <option value="Sonstiges">✨ Sonstiges</option>
-      </select>
-    </div>
-    <div class="form-row"><label class="form-label">Titel</label><input type="text" id="ie-title" placeholder="z.B. Lichterketten am Eingang"/></div>
-    <div class="form-row"><label class="form-label">Beschreibung / Notiz</label><textarea id="ie-note" rows="3" placeholder="Details, Links, Inspiration..."></textarea></div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('modal-idee-edit')">Abbrechen</button>
-      <button class="btn btn-primary" onclick="saveIdeeEdit()">Speichern</button>
-    </div>
-  </div>
-</div>
-</body>
-</html>
