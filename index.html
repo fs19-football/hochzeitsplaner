@@ -230,18 +230,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
 
 <!-- ===== DIENSTLEISTER ===== -->
 <div class="tab-panel" id="tab-dienstleister">
-  <div class="card">
-    <div class="section-header">
-      <div class="section-title">🤝 Dienstleister-Tracker</div>
-      <button class="btn btn-primary" onclick="openModal('modal-dienst')">+ Dienstleister hinzufügen</button>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Kategorie</th><th>Name</th><th>Kontakt</th><th>🌐 Website</th><th>Preis</th><th>Anzahlung</th><th>Zahlungsstatus</th><th>Vertrag</th><th>Notiz</th><th></th></tr></thead>
-        <tbody id="dienst-table"></tbody>
-      </table>
-    </div>
+  <div class="tip-box">💡 <span>Dienstleister eintragen, Website direkt verlinken und Zahlungsstatus im Blick behalten.</span></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+    <div class="section-title">🤝 Dienstleister-Tracker</div>
+    <button class="btn btn-primary" onclick="openModal('modal-dienst')">+ Dienstleister hinzufügen</button>
   </div>
+  <div id="dienst-cards"></div>
 </div>
 
 <!-- ===== LOCATION ===== -->
@@ -933,25 +927,49 @@ function delGast(id){state.gaeste=state.gaeste.filter(x=>x.id!==id);renderGaeste
 // DIENSTLEISTER
 // ============================================================
 function renderDienst(){
-  const tbody=document.getElementById('dienst-table');
-  if(!state.dienst.length){tbody.innerHTML='<tr><td colspan="10" class="empty-state">Noch keine Dienstleister.</td></tr>';return;}
-  tbody.innerHTML=state.dienst.map(d=>`<tr>
-    <td><strong>${d.kat}</strong></td>
-    <td>${d.name}</td>
-    <td style="font-size:0.78rem">${d.tel?'📞 '+d.tel+'<br>':''}${d.email?'✉️ '+d.email:''}</td>
-    <td>${d.website?'<a href="'+d.website+'" target="_blank" style="color:var(--rose-dark);font-weight:600;font-size:0.82rem;">🌐 öffnen</a>':'<span style="color:#ccc;">–</span>'}</td>
-    <td>${d.price?fmt(d.price):'–'}</td>
-    <td>${d.deposit?fmt(d.deposit):'–'}</td>
-    <td><select onchange="updDienst(${d.id},'status',this.value)" style="width:auto">
-      <option ${d.status==='offen'?'selected':''} value="offen">Offen</option>
-      <option ${d.status==='anzahlung'?'selected':''} value="anzahlung">Anzahlung ✓</option>
-      <option ${d.status==='bezahlt'?'selected':''} value="bezahlt">Bezahlt ✓</option></select></td>
-    <td><select onchange="updDienst(${d.id},'contract',this.value)" style="width:auto">
-      <option ${d.contract==='ausstehend'?'selected':''} value="ausstehend">Ausstehend</option>
-      <option ${d.contract==='unterschrieben'?'selected':''} value="unterschrieben">Unterschrieben ✓</option></select></td>
-    <td><input type="text" value="${d.note||''}" style="width:110px" onchange="updDienst(${d.id},'note',this.value)" placeholder="Notiz..."/></td>
-    <td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="openDienstEdit(${d.id})">✏️</button> <button class="btn btn-danger btn-sm" onclick="delDienst(${d.id})">✕</button></td>
-  </tr>`).join('');
+  const el=document.getElementById('dienst-cards');
+  if(!state.dienst.length){el.innerHTML='<div class="empty-state" style="padding:32px;text-align:center;color:var(--text-light);">Noch keine Dienstleister hinzugefügt.</div>';return;}
+  const statusColor={offen:'var(--rose-dark)',anzahlung:'var(--gold)',bezahlt:'var(--green)'};
+  const statusText={offen:'Offen',anzahlung:'Anzahlung bezahlt',bezahlt:'Vollständig bezahlt ✓'};
+  const contractColor={ausstehend:'var(--rose-dark)',unterschrieben:'var(--green)'};
+  const contractText={ausstehend:'Ausstehend',unterschrieben:'Unterschrieben ✓'};
+  el.innerHTML=state.dienst.map(d=>{
+    const webUrl=d.website?(d.website.startsWith('http')?d.website:'https://'+d.website):'';
+    return `<div class="card" style="border-left:4px solid var(--rose);margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--brown);font-weight:700;">${d.name||'–'}</div>
+          <div style="font-size:0.8rem;color:var(--text-light);margin-top:2px;">🏷️ ${d.kat}</div>
+          ${d.tel?`<div style="font-size:0.8rem;color:var(--text-light);margin-top:2px;">📞 ${d.tel}</div>`:''}
+          ${d.email?`<div style="font-size:0.8rem;color:var(--text-light);margin-top:2px;">✉️ ${d.email}</div>`:''}
+          ${webUrl?`<div style="font-size:0.8rem;margin-top:3px;"><a href="${webUrl}" target="_blank" style="color:var(--rose-dark);">${d.website}</a></div>`:''}
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button class="btn btn-secondary btn-sm" onclick="openDienstEdit(${d.id})">✏️ Bearbeiten</button>
+          <button class="btn btn-danger btn-sm" onclick="delDienst(${d.id})">✕</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:7px;margin-top:12px;">
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
+          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Gesamtpreis</div>
+          <div style="font-weight:700;color:var(--brown);">${d.price?fmt(d.price):'–'}</div>
+        </div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
+          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Anzahlung</div>
+          <div style="font-weight:700;color:var(--brown);">${d.deposit?fmt(d.deposit):'–'}</div>
+        </div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
+          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Zahlung</div>
+          <div style="font-weight:700;color:${statusColor[d.status]||'var(--text)'};">${statusText[d.status]||d.status}</div>
+        </div>
+        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
+          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Vertrag</div>
+          <div style="font-weight:700;color:${contractColor[d.contract]||'var(--text)'};">${contractText[d.contract]||d.contract}</div>
+        </div>
+      </div>
+      ${d.note?`<div style="margin-top:9px;font-size:0.82rem;color:var(--text-light);border-top:1px solid var(--rose-light);padding-top:7px;">📝 ${d.note}</div>`:''}
+    </div>`;
+  }).join('');
 }
 function addDienst(){
   state.dC++;
