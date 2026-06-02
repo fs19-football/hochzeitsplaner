@@ -235,8 +235,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
       <div class="section-title">🤝 Dienstleister-Tracker</div>
       <button class="btn btn-primary" onclick="openModal('modal-dienst')">+ Dienstleister hinzufügen</button>
     </div>
-    <div id="dienst-filter-btns" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;"></div>
-    <div id="dienst-cards"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Kategorie</th><th>Name</th><th>Kontakt</th><th>Preis</th><th>Anzahlung</th><th>Zahlungsstatus</th><th>Vertrag</th><th>Notiz</th><th></th></tr></thead>
+        <tbody id="dienst-table"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -400,6 +404,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
       <div><label class="form-label">Vertrag</label><select id="d-contract"><option value="ausstehend">Ausstehend</option><option value="unterschrieben">Unterschrieben ✓</option></select></div>
       <div><label class="form-label">Zahlungsstatus</label><select id="d-status"><option value="offen">Offen</option><option value="anzahlung">Anzahlung bezahlt</option><option value="bezahlt">Vollständig bezahlt ✓</option></select></div>
     </div>
+    <div class="form-row"><label class="form-label">Website / Link</label><input type="url" id="d-web" placeholder="https://www.fotograf-muster.de"/></div>
     <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="d-note" placeholder="z.B. Probetermin am..."/></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-dienst')">Abbrechen</button>
@@ -927,118 +932,30 @@ function delGast(id){state.gaeste=state.gaeste.filter(x=>x.id!==id);renderGaeste
 // ============================================================
 // DIENSTLEISTER
 // ============================================================
-let activeDienstFilter = 'Alle';
-let dienstStarInputVal = 0;
-let dienstStarEditVal = 0;
-
-function setDienstFilter(k){ activeDienstFilter=k; renderDienst(); }
-
-function setDienstStarInput(v){
-  dienstStarInputVal=v;
-  document.getElementById('d-rating').value=v;
-  document.querySelectorAll('#d-stars-input .star').forEach((s,i)=>s.textContent=i<v?'⭐':'☆');
-}
-function setDienstStarEdit(v){
-  dienstStarEditVal=v;
-  document.getElementById('de-rating').value=v;
-  document.querySelectorAll('#de-stars-input .star').forEach((s,i)=>s.textContent=i<v?'⭐':'☆');
-}
-function setDienstRating(id,v){
-  const d=state.dienst.find(x=>x.id===id);if(d){d.rating=v;renderDienst();save();}
-}
-function toggleDienstFav(id){
-  const d=state.dienst.find(x=>x.id===id);if(d){d.favorit=!d.favorit;renderDienst();save();}
-}
-
 function renderDienst(){
-  const filterEl=document.getElementById('dienst-filter-btns');
-  const cardsEl=document.getElementById('dienst-cards');
-  if(!filterEl||!cardsEl)return;
-
-  const kats=['Alle',...new Set(state.dienst.map(d=>d.kat).filter(Boolean))];
-  filterEl.innerHTML=kats.map(k=>`
-    <button onclick="setDienstFilter('${k}')" style="padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-family:'Lato',sans-serif;font-size:0.8rem;font-weight:600;background:${activeDienstFilter===k?'var(--rose)':'var(--brown-light)'};color:${activeDienstFilter===k?'white':'var(--brown)'};transition:all 0.2s;">${k}</button>
-  `).join('');
-
-  const filtered = activeDienstFilter==='Alle' ? state.dienst : state.dienst.filter(d=>d.kat===activeDienstFilter);
-
-  if(!filtered.length){
-    cardsEl.innerHTML='<div class="empty-state">'+(state.dienst.length?'Keine Dienstleister in dieser Kategorie.':'Noch keine Dienstleister hinzugefügt.')+'</div>';
-    return;
-  }
-
-  const sorted=[...filtered].sort((a,b)=>(b.favorit?1:0)-(a.favorit?1:0));
-
-  cardsEl.innerHTML=sorted.map(d=>{
-    const stars=[1,2,3,4,5].map(s=>`<span class="star" onclick="setDienstRating(${d.id},${s})" style="font-size:1rem;">${s<=(d.rating||0)?'⭐':'☆'}</span>`).join('');
-    const statusColor=d.status==='bezahlt'?'var(--green)':d.status==='anzahlung'?'var(--gold)':'var(--rose-dark)';
-    const statusLabel=d.status==='bezahlt'?'✓ Bezahlt':d.status==='anzahlung'?'Anzahlung ✓':'Offen';
-    const contractColor=d.contract==='unterschrieben'?'var(--green)':'var(--rose-dark)';
-    const contractLabel=d.contract==='unterschrieben'?'✓ Unterschrieben':'Ausstehend';
-    const leistungenLines=(d.leistungen||'').split('\n').filter(l=>l.trim());
-    return `<div class="card" style="border-left:4px solid ${d.favorit?'var(--gold)':'var(--rose)'};margin-bottom:14px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
-        <div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--brown);font-weight:700;">${d.name||'–'}</div>
-            ${d.favorit?'<span style="background:var(--gold-light);color:var(--brown);border:1px solid var(--gold);border-radius:20px;padding:2px 9px;font-size:0.73rem;font-weight:700;">⭐ Favorit</span>':''}
-          </div>
-          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:5px;font-size:0.8rem;color:var(--text-light);">
-            <span>📂 ${d.kat||'–'}</span>
-            ${d.web?`<a href="https://${(d.web||'').replace(/^https?:\/\//,'')}" target="_blank" style="color:var(--rose-dark);text-decoration:none;">🌐 ${d.web}</a>`:''}
-            ${d.tel?`<span>📞 ${d.tel}</span>`:''}
-            ${d.email?`<span>✉️ ${d.email}</span>`:''}
-          </div>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
-          <button onclick="toggleDienstFav(${d.id})" style="background:${d.favorit?'var(--gold-light)':'var(--brown-light)'};border:1px solid ${d.favorit?'var(--gold)':'var(--rose-light)'};border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.85rem;">${d.favorit?'💛':'🤍'}</button>
-          <button class="btn btn-secondary btn-sm" onclick="openDienstEdit(${d.id})">✏️ Bearbeiten</button>
-          <button class="btn btn-danger btn-sm" onclick="delDienst(${d.id})">✕</button>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;margin:8px 0 4px;"><span style="font-size:0.8rem;color:var(--text-light);">Bewertung:</span><div class="stars">${stars}</div></div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px;margin-top:9px;">
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Gesamtpreis</div><div style="font-weight:700;color:var(--brown);font-size:1rem;">${d.price?fmt(d.price):'–'}</div></div>
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Anzahlung</div><div style="font-weight:700;color:var(--brown);">${d.deposit?fmt(d.deposit):'–'}</div></div>
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Zahlung</div><div style="font-weight:700;color:${statusColor};">${statusLabel}</div></div>
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;"><div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Vertrag</div><div style="font-weight:700;color:${contractColor};">${contractLabel}</div></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:11px;">
-        <div style="border-top:1px solid var(--rose-light);padding-top:8px;">
-          <div style="font-size:0.78rem;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:5px;">✅ Inklusiv-Leistungen</div>
-          ${leistungenLines.length?'<ul style="margin:0;padding-left:16px;font-size:0.83rem;color:var(--text);">'+leistungenLines.map(l=>`<li>${l}</li>`).join('')+'</ul>':'<em style="font-size:0.82rem;color:var(--text-light);">Noch keine Angaben</em>'}
-        </div>
-        <div style="border-top:1px solid var(--rose-light);padding-top:8px;">
-          <div style="font-size:0.78rem;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:5px;">📝 Notizen</div>
-          <div style="font-size:0.83rem;color:var(--text);">${d.note?(d.note.replace(/\n/g,'<br>')):'<em style="color:var(--text-light);">Keine Notizen</em>'}</div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  const tbody=document.getElementById('dienst-table');
+  if(!state.dienst.length){tbody.innerHTML='<tr><td colspan="9" class="empty-state">Noch keine Dienstleister.</td></tr>';return;}
+  tbody.innerHTML=state.dienst.map(d=>`<tr>
+    <td><strong>${d.kat}</strong></td>
+    <td>${d.name}</td>
+    <td style="font-size:0.78rem">${d.tel?'📞 '+d.tel+'<br>':''}${d.email?'✉️ '+d.email+'<br>':''}${d.website?'<a href="'+d.website+'" target="_blank" style="color:var(--rose-dark);font-size:0.76rem;">🌐 Website</a>':''}</td>
+    <td>${d.price?fmt(d.price):'–'}</td>
+    <td>${d.deposit?fmt(d.deposit):'–'}</td>
+    <td><select onchange="updDienst(${d.id},'status',this.value)" style="width:auto">
+      <option ${d.status==='offen'?'selected':''} value="offen">Offen</option>
+      <option ${d.status==='anzahlung'?'selected':''} value="anzahlung">Anzahlung ✓</option>
+      <option ${d.status==='bezahlt'?'selected':''} value="bezahlt">Bezahlt ✓</option></select></td>
+    <td><select onchange="updDienst(${d.id},'contract',this.value)" style="width:auto">
+      <option ${d.contract==='ausstehend'?'selected':''} value="ausstehend">Ausstehend</option>
+      <option ${d.contract==='unterschrieben'?'selected':''} value="unterschrieben">Unterschrieben ✓</option></select></td>
+    <td><input type="text" value="${d.note||''}" style="width:110px" onchange="updDienst(${d.id},'note',this.value)" placeholder="Notiz..."/></td>
+    <td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="openDienstEdit(${d.id})">✏️</button> <button class="btn btn-danger btn-sm" onclick="delDienst(${d.id})">✕</button></td>
+  </tr>`).join('');
 }
-
 function addDienst(){
   state.dC++;
-  state.dienst.push({
-    id:state.dC,
-    kat:(document.getElementById('d-kat').value||'').trim(),
-    name:document.getElementById('d-name').value,
-    web:document.getElementById('d-web').value,
-    tel:document.getElementById('d-tel').value,
-    email:document.getElementById('d-email').value,
-    price:parseFloat(document.getElementById('d-price').value)||0,
-    deposit:parseFloat(document.getElementById('d-deposit').value)||0,
-    contract:document.getElementById('d-contract').value,
-    status:document.getElementById('d-status').value,
-    leistungen:document.getElementById('d-leistungen').value,
-    note:document.getElementById('d-note').value,
-    rating:parseInt(document.getElementById('d-rating').value)||0,
-    favorit:false
-  });
-  ['d-name','d-kat','d-web','d-tel','d-email','d-price','d-deposit','d-leistungen','d-note'].forEach(id=>document.getElementById(id).value='');
-  dienstStarInputVal=0;
-  document.getElementById('d-rating').value=0;
-  document.querySelectorAll('#d-stars-input .star').forEach(s=>s.textContent='☆');
+  state.dienst.push({id:state.dC,kat:document.getElementById('d-kat').value,name:document.getElementById('d-name').value,tel:document.getElementById('d-tel').value,email:document.getElementById('d-email').value,price:parseFloat(document.getElementById('d-price').value)||0,deposit:parseFloat(document.getElementById('d-deposit').value)||0,contract:document.getElementById('d-contract').value,status:document.getElementById('d-status').value,website:document.getElementById('d-web').value,note:document.getElementById('d-note').value});
+  ['d-name','d-tel','d-email','d-price','d-deposit','d-web','d-note'].forEach(id=>document.getElementById(id).value='');
   closeModal('modal-dienst');renderDienst();save();
 }
 function updDienst(id,f,v){const d=state.dienst.find(x=>x.id===id);if(d){d[f]=v;renderDienst();save();}}
@@ -1472,6 +1389,7 @@ function openDienstEdit(id){
   document.getElementById('de-deposit').value=d.deposit||0;
   document.getElementById('de-contract').value=d.contract||'ausstehend';
   document.getElementById('de-status').value=d.status||'offen';
+  document.getElementById('de-web').value=d.website||'';
   document.getElementById('de-note').value=d.note||'';
   openModal('modal-dienst-edit');
 }
@@ -1485,6 +1403,7 @@ function saveDienstEdit(){
   d.deposit=parseFloat(document.getElementById('de-deposit').value)||0;
   d.contract=document.getElementById('de-contract').value;
   d.status=document.getElementById('de-status').value;
+  d.website=document.getElementById('de-web').value;
   d.note=document.getElementById('de-note').value;
   closeModal('modal-dienst-edit'); renderDienst(); save(); editingDienstId=null;
 }
@@ -1511,6 +1430,50 @@ function saveAblaufEdit(){
 
 
 // Alle Funktionen global verfügbar machen (nötig weil wir jetzt ein ES-Modul sind)
+window.showTab = showTab;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.onDateChange = onDateChange;
+window.addMilestone = addMilestone;
+window.toggleMs = toggleMs;
+window.toggleMsDone = toggleMsDone;
+window.deleteMs = deleteMs;
+window.updateBudget = updateBudget;
+window.addBudget = addBudget;
+window.updBudget = updBudget;
+window.delBudget = delBudget;
+window.addGast = addGast;
+window.updGast = updGast;
+window.delGast = delGast;
+window.addMenuRow = addMenuRow;
+window.removeMenuRow = removeMenuRow;
+window.renderGaeste = renderGaeste;
+window.addDienst = addDienst;
+window.updDienst = updDienst;
+window.delDienst = delDienst;
+window.addLocation = addLocation;
+window.updLocation = updLocation;
+window.delLocation = delLocation;
+window.openLocationEdit = openLocationEdit;
+window.saveLocationEdit = saveLocationEdit;
+window.setRating = setRating;
+window.addAblauf = addAblauf;
+window.delAblauf = delAblauf;
+window.setTool = setTool;
+window.clearCanvas = clearCanvas;
+window.exportPlan = exportPlan;
+window.confirmRename = confirmRename;
+window.openMilestoneEdit = openMilestoneEdit;
+window.saveMilestoneEdit = saveMilestoneEdit;
+window.openBudgetEdit = openBudgetEdit;
+window.saveBudgetEdit = saveBudgetEdit;
+window.openGastEdit = openGastEdit;
+window.addMenuRowEdit = addMenuRowEdit;
+window.saveGastEdit = saveGastEdit;
+window.openDienstEdit = openDienstEdit;
+window.saveDienstEdit = saveDienstEdit;
+window.openAblaufEdit = openAblaufEdit;
+window.saveAblaufEdit = saveAblaufEdit;
 function renderIdeen(){
   var board = document.getElementById('ideen-board');
   var filterEl = document.getElementById('ideen-filter-btns');
@@ -1613,55 +1576,8 @@ function saveIdeeEdit(){
 }
 function delIdee(id){ state.ideen=state.ideen.filter(x=>x.id!==id); renderIdeen(); save(); }
 
-window.showTab = showTab;
-window.openModal = openModal;
-window.closeModal = closeModal;
-window.onDateChange = onDateChange;
-window.addMilestone = addMilestone;
-window.toggleMs = toggleMs;
-window.toggleMsDone = toggleMsDone;
-window.deleteMs = deleteMs;
-window.updateBudget = updateBudget;
-window.addBudget = addBudget;
-window.updBudget = updBudget;
-window.delBudget = delBudget;
-window.addGast = addGast;
-window.updGast = updGast;
-window.delGast = delGast;
-window.addMenuRow = addMenuRow;
-window.removeMenuRow = removeMenuRow;
-window.renderGaeste = renderGaeste;
-window.addDienst = addDienst;
-window.updDienst = updDienst;
-window.delDienst = delDienst;
-window.addLocation = addLocation;
-window.updLocation = updLocation;
-window.delLocation = delLocation;
-window.openLocationEdit = openLocationEdit;
-window.saveLocationEdit = saveLocationEdit;
-window.setRating = setRating;
-window.addAblauf = addAblauf;
-window.delAblauf = delAblauf;
-window.setTool = setTool;
-window.clearCanvas = clearCanvas;
-window.exportPlan = exportPlan;
-window.confirmRename = confirmRename;
-window.openMilestoneEdit = openMilestoneEdit;
-window.saveMilestoneEdit = saveMilestoneEdit;
-window.openBudgetEdit = openBudgetEdit;
-window.saveBudgetEdit = saveBudgetEdit;
-window.openGastEdit = openGastEdit;
-window.addMenuRowEdit = addMenuRowEdit;
-window.saveGastEdit = saveGastEdit;
-window.openDienstEdit = openDienstEdit;
-window.saveDienstEdit = saveDienstEdit;
-window.setDienstFilter = setDienstFilter;
-window.setDienstStarInput = setDienstStarInput;
-window.setDienstStarEdit = setDienstStarEdit;
-window.setDienstRating = setDienstRating;
-window.toggleDienstFav = toggleDienstFav;
-window.openAblaufEdit = openAblaufEdit;
-window.saveAblaufEdit = saveAblaufEdit;
+
+
 window.addIdee = addIdee;
 window.openIdeeEdit = openIdeeEdit;
 window.saveIdeeEdit = saveIdeeEdit;
@@ -1754,6 +1670,7 @@ window.setIdeenFilter = setIdeenFilter;
       <div><label class="form-label">Vertrag</label><select id="de-contract"><option value="ausstehend">Ausstehend</option><option value="unterschrieben">Unterschrieben ✓</option></select></div>
       <div><label class="form-label">Zahlungsstatus</label><select id="de-status"><option value="offen">Offen</option><option value="anzahlung">Anzahlung bezahlt</option><option value="bezahlt">Vollständig bezahlt ✓</option></select></div>
     </div>
+    <div class="form-row"><label class="form-label">Website / Link</label><input type="url" id="de-web" placeholder="https://www.fotograf-muster.de"/></div>
     <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="de-note" placeholder="z.B. Probetermin am..."/></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-dienst-edit')">Abbrechen</button>
