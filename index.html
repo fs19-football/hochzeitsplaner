@@ -230,7 +230,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
 
 <!-- ===== DIENSTLEISTER ===== -->
 <div class="tab-panel" id="tab-dienstleister">
-  <div class="tip-box">💡 <span>Dienstleister eintragen, Website direkt verlinken und Zahlungsstatus im Blick behalten.</span></div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
     <div class="section-title">🤝 Dienstleister-Tracker</div>
     <button class="btn btn-primary" onclick="openModal('modal-dienst')">+ Dienstleister hinzufügen</button>
@@ -401,8 +400,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
     </div>
     <div class="form-row"><label class="form-label">Website / Link</label><input type="url" id="d-web" placeholder="https://www.fotograf-muster.de"/></div>
     <div class="form-row-2">
-      <div><label class="form-label">Inklusiv-Leistungen</label><textarea id="d-leistungen" rows="3" placeholder="Was ist alles inklusive?&#10;Enter = neue Zeile"></textarea></div>
-      <div><label class="form-label">Notizen</label><textarea id="d-note" rows="3" placeholder="Eigene Notizen, Termine...&#10;Enter = neue Zeile"></textarea></div>
+      <div><label class="form-label">Inklusiv-Leistungen</label><textarea id="d-leistungen" rows="3" placeholder="Was ist alles inklusive?"></textarea></div>
+      <div><label class="form-label">Notizen</label><textarea id="d-note" rows="3" placeholder="Eigene Notizen"></textarea></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-dienst')">Abbrechen</button>
