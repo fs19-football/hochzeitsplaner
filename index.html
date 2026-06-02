@@ -235,6 +235,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
     <div class="section-title">🤝 Dienstleister-Tracker</div>
     <button class="btn btn-primary" onclick="openModal('modal-dienst')">+ Dienstleister hinzufügen</button>
   </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="dienst-filter-btns"></div>
   <div id="dienst-cards"></div>
 </div>
 
@@ -399,7 +400,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
       <div><label class="form-label">Zahlungsstatus</label><select id="d-status"><option value="offen">Offen</option><option value="anzahlung">Anzahlung bezahlt</option><option value="bezahlt">Vollständig bezahlt ✓</option></select></div>
     </div>
     <div class="form-row"><label class="form-label">Website / Link</label><input type="url" id="d-web" placeholder="https://www.fotograf-muster.de"/></div>
-    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="d-note" placeholder="z.B. Probetermin am..."/></div>
+    <div class="form-row-2">
+      <div><label class="form-label">Inklusiv-Leistungen</label><textarea id="d-leistungen" rows="3" placeholder="Was ist alles inklusive?&#10;Enter = neue Zeile"></textarea></div>
+      <div><label class="form-label">Notizen</label><textarea id="d-note" rows="3" placeholder="Eigene Notizen, Termine...&#10;Enter = neue Zeile"></textarea></div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-dienst')">Abbrechen</button>
       <button class="btn btn-primary" onclick="addDienst()">Hinzufügen</button>
@@ -647,6 +651,10 @@ async function load(){
 // ============================================================
 function fmt(n){return Number(n).toLocaleString('de-DE')+'  €';}
 function fmtDate(d){if(!d)return '';const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});}
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+let activeDienstFilter='Alle';
+function setDienstFilter(k){activeDienstFilter=k;renderDienst();}
+window.setDienstFilter=setDienstFilter;
 
 // ============================================================
 // TABS
@@ -928,53 +936,83 @@ function delGast(id){state.gaeste=state.gaeste.filter(x=>x.id!==id);renderGaeste
 // ============================================================
 function renderDienst(){
   const el=document.getElementById('dienst-cards');
-  if(!state.dienst.length){el.innerHTML='<div class="empty-state" style="padding:32px;text-align:center;color:var(--text-light);">Noch keine Dienstleister hinzugefügt.</div>';return;}
-  const statusColor={offen:'var(--rose-dark)',anzahlung:'var(--gold)',bezahlt:'var(--green)'};
-  const statusText={offen:'Offen',anzahlung:'Anzahlung bezahlt',bezahlt:'Vollständig bezahlt ✓'};
+  // --- Filter-Buttons ---
+  const filterEl=document.getElementById('dienst-filter-btns');
+  if(filterEl){
+    const kats=['Alle'];
+    state.dienst.forEach(d=>{if(d.kat&&!kats.includes(d.kat))kats.push(d.kat);});
+    filterEl.innerHTML=kats.map(k=>`<button class="btn btn-sm" style="border-radius:20px;border:2px solid ${activeDienstFilter===k?'var(--rose-dark)':'transparent'};background:${activeDienstFilter===k?'var(--rose-dark)':'var(--brown-light)'};color:${activeDienstFilter===k?'white':'var(--brown)'};" onclick="setDienstFilter('${escHtml(k)}')">${escHtml(k)}</button>`).join('');
+  }
+  const filtered=activeDienstFilter==='Alle'?state.dienst:state.dienst.filter(d=>d.kat===activeDienstFilter);
+  if(!filtered.length){el.innerHTML='<div class="empty-state" style="padding:32px;text-align:center;color:var(--text-light);">'+(state.dienst.length?'Keine Dienstleister in dieser Kategorie.':'Noch keine Dienstleister hinzugefügt.')+'</div>';return;}
+  const statusColor={offen:'var(--rose-dark)',anzahlung:'#b37d00',bezahlt:'var(--green)'};
   const contractColor={ausstehend:'var(--rose-dark)',unterschrieben:'var(--green)'};
-  const contractText={ausstehend:'Ausstehend',unterschrieben:'Unterschrieben ✓'};
-  el.innerHTML=state.dienst.map(d=>{
+  const KAT_EMOJI={'Fotograf':'📷','Videograf':'🎬','DJ':'🎵','Band':'🎸','Florist':'🌸','Catering':'🍽️','Torte':'🎂','Visagistin/Friseur':'💄','Trauredner/in':'💒','Transport/Limousine':'🚗','Sonstiges':'🤝'};
+  el.innerHTML=filtered.map(d=>{
     const webUrl=d.website?(d.website.startsWith('http')?d.website:'https://'+d.website):'';
-    return `<div class="card" style="border-left:4px solid var(--rose);margin-bottom:14px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
-        <div>
-          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--brown);font-weight:700;">${d.name||'–'}</div>
-          <div style="font-size:0.8rem;color:var(--text-light);margin-top:2px;">🏷️ ${d.kat}</div>
-          ${d.tel?`<div style="font-size:0.8rem;color:var(--text-light);margin-top:2px;">📞 ${d.tel}</div>`:''}
-          ${d.email?`<div style="font-size:0.8rem;color:var(--text-light);margin-top:2px;">✉️ ${d.email}</div>`:''}
-          ${webUrl?`<div style="font-size:0.8rem;margin-top:3px;"><a href="${webUrl}" target="_blank" style="color:var(--rose-dark);">${d.website}</a></div>`:''}
+    const katEmoji=KAT_EMOJI[d.kat]||'🤝';
+    const noteLines=d.note?escHtml(d.note).replace(/\n/g,'<br>'):'<span style="color:var(--text-light);font-style:italic;font-size:0.8rem;">Noch keine Notizen.</span>';
+    const leistLines=d.leistungen?escHtml(d.leistungen).replace(/\n/g,'<br>'):'<span style="color:#2d6a31;font-style:italic;font-size:0.8rem;">Keine Angaben.</span>';
+    return `<div class="card" style="border-left:4px solid var(--rose);margin-bottom:16px;padding:18px 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:11px;gap:10px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px;">
+            <span style="background:var(--rose-light);border-radius:20px;padding:3px 10px;font-size:0.75rem;font-weight:700;color:var(--rose-dark);letter-spacing:0.3px;">${katEmoji} ${escHtml(d.kat)}</span>
+            <span style="font-family:'Playfair Display',serif;font-size:1.08rem;color:var(--brown);font-weight:700;">${escHtml(d.name||'–')}</span>
+          </div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.8rem;color:var(--text-light);">
+            ${webUrl?`<a href="${webUrl}" target="_blank" style="color:var(--rose-dark);text-decoration:none;font-weight:600;">🌐 ${escHtml(d.website)}</a>`:''}
+            ${d.tel?`<span>📞 ${escHtml(d.tel)}</span>`:''}
+            ${d.email?`<span>✉️ ${escHtml(d.email)}</span>`:''}
+          </div>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <button class="btn btn-secondary btn-sm" onclick="openDienstEdit(${d.id})">✏️ Bearbeiten</button>
-          <button class="btn btn-danger btn-sm" onclick="delDienst(${d.id})">✕</button>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:7px;margin-top:12px;">
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
-          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Gesamtpreis</div>
-          <div style="font-weight:700;color:var(--brown);">${d.price?fmt(d.price):'–'}</div>
-        </div>
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
-          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Anzahlung</div>
-          <div style="font-weight:700;color:var(--brown);">${d.deposit?fmt(d.deposit):'–'}</div>
-        </div>
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
-          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Zahlung</div>
-          <div style="font-weight:700;color:${statusColor[d.status]||'var(--text)'};">${statusText[d.status]||d.status}</div>
-        </div>
-        <div style="background:var(--cream);border-radius:7px;padding:7px 11px;">
-          <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;">Vertrag</div>
-          <div style="font-weight:700;color:${contractColor[d.contract]||'var(--text)'};">${contractText[d.contract]||d.contract}</div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn btn-secondary btn-sm" onclick="openDienstEdit(${d.id})" title="Bearbeiten">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="delDienst(${d.id})" title="Löschen">✕</button>
         </div>
       </div>
-      ${d.note?`<div style="margin-top:9px;font-size:0.82rem;color:var(--text-light);border-top:1px solid var(--rose-light);padding-top:7px;">📝 ${d.note}</div>`:''}
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px;">
+        <div style="background:var(--gold-light);border:1px solid var(--gold);border-radius:9px;padding:8px 10px;">
+          <div style="font-size:0.65rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">💰 Gesamtpr.</div>
+          <div style="font-weight:700;color:var(--brown);font-size:0.9rem;">${d.price?fmt(d.price):'–'}</div>
+        </div>
+        <div style="background:var(--cream);border:1px solid var(--rose-light);border-radius:9px;padding:8px 10px;">
+          <div style="font-size:0.65rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">💳 Anzahlung</div>
+          <div style="font-weight:700;color:var(--brown);font-size:0.9rem;">${d.deposit?fmt(d.deposit):'–'}</div>
+        </div>
+        <div style="background:var(--cream);border:1px solid var(--rose-light);border-radius:9px;padding:8px 10px;">
+          <div style="font-size:0.65rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">📋 Zahlung</div>
+          <select style="border:none;background:transparent;font-weight:700;color:${statusColor[d.status]||'var(--text)'};font-family:'Lato',sans-serif;font-size:0.82rem;cursor:pointer;padding:0;width:100%;margin-top:1px;" onchange="updDienst(${d.id},'status',this.value)">
+            <option value="offen" ${d.status==='offen'?'selected':''}>Offen</option>
+            <option value="anzahlung" ${d.status==='anzahlung'?'selected':''}>Anzahlung ✓</option>
+            <option value="bezahlt" ${d.status==='bezahlt'?'selected':''}>Bezahlt ✓</option>
+          </select>
+        </div>
+        <div style="background:var(--cream);border:1px solid var(--rose-light);border-radius:9px;padding:8px 10px;">
+          <div style="font-size:0.65rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;"># Vertrag</div>
+          <select style="border:none;background:transparent;font-weight:700;color:${contractColor[d.contract]||'var(--text)'};font-family:'Lato',sans-serif;font-size:0.82rem;cursor:pointer;padding:0;width:100%;margin-top:1px;" onchange="updDienst(${d.id},'contract',this.value)">
+            <option value="ausstehend" ${d.contract==='ausstehend'?'selected':''}>Ausstehend</option>
+            <option value="unterschrieben" ${d.contract==='unterschrieben'?'selected':''}>Unterzeichnet ✓</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="background:var(--green-light);border:1px solid var(--green);border-radius:9px;padding:10px 13px;">
+          <div style="font-size:0.68rem;font-weight:700;color:#2d6a31;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">✅ Inklusiv-Leistungen</div>
+          <div style="font-size:0.82rem;color:var(--text);line-height:1.55;">${leistLines}</div>
+        </div>
+        <div style="background:var(--brown-light);border:1px solid var(--rose-light);border-radius:9px;padding:10px 13px;">
+          <div style="font-size:0.68rem;font-weight:700;color:var(--brown);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">📝 Notizen</div>
+          <div style="font-size:0.82rem;color:var(--text);line-height:1.55;">${noteLines}</div>
+        </div>
+      </div>
     </div>`;
   }).join('');
 }
 function addDienst(){
   state.dC++;
-  state.dienst.push({id:state.dC,kat:document.getElementById('d-kat').value,name:document.getElementById('d-name').value,tel:document.getElementById('d-tel').value,email:document.getElementById('d-email').value,price:parseFloat(document.getElementById('d-price').value)||0,deposit:parseFloat(document.getElementById('d-deposit').value)||0,contract:document.getElementById('d-contract').value,status:document.getElementById('d-status').value,website:document.getElementById('d-web').value,note:document.getElementById('d-note').value});
-  ['d-name','d-tel','d-email','d-price','d-deposit','d-web','d-note'].forEach(id=>document.getElementById(id).value='');
+  state.dienst.push({id:state.dC,kat:document.getElementById('d-kat').value,name:document.getElementById('d-name').value,tel:document.getElementById('d-tel').value,email:document.getElementById('d-email').value,price:parseFloat(document.getElementById('d-price').value)||0,deposit:parseFloat(document.getElementById('d-deposit').value)||0,contract:document.getElementById('d-contract').value,status:document.getElementById('d-status').value,website:document.getElementById('d-web').value,leistungen:document.getElementById('d-leistungen').value,note:document.getElementById('d-note').value});
+  ['d-name','d-tel','d-email','d-price','d-deposit','d-web','d-leistungen','d-note'].forEach(id=>document.getElementById(id).value='');
   closeModal('modal-dienst');renderDienst();save();
 }
 function updDienst(id,f,v){const d=state.dienst.find(x=>x.id===id);if(d){d[f]=v;renderDienst();save();}}
@@ -1409,6 +1447,7 @@ function openDienstEdit(id){
   document.getElementById('de-contract').value=d.contract||'ausstehend';
   document.getElementById('de-status').value=d.status||'offen';
   document.getElementById('de-web').value=d.website||'';
+  document.getElementById('de-leistungen').value=d.leistungen||'';
   document.getElementById('de-note').value=d.note||'';
   openModal('modal-dienst-edit');
 }
@@ -1423,6 +1462,7 @@ function saveDienstEdit(){
   d.contract=document.getElementById('de-contract').value;
   d.status=document.getElementById('de-status').value;
   d.website=document.getElementById('de-web').value;
+  d.leistungen=document.getElementById('de-leistungen').value;
   d.note=document.getElementById('de-note').value;
   closeModal('modal-dienst-edit'); renderDienst(); save(); editingDienstId=null;
 }
@@ -1690,7 +1730,10 @@ window.setIdeenFilter = setIdeenFilter;
       <div><label class="form-label">Zahlungsstatus</label><select id="de-status"><option value="offen">Offen</option><option value="anzahlung">Anzahlung bezahlt</option><option value="bezahlt">Vollständig bezahlt ✓</option></select></div>
     </div>
     <div class="form-row"><label class="form-label">Website / Link</label><input type="url" id="de-web" placeholder="https://www.fotograf-muster.de"/></div>
-    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="de-note" placeholder="z.B. Probetermin am..."/></div>
+    <div class="form-row-2">
+      <div><label class="form-label">Inklusiv-Leistungen</label><textarea id="de-leistungen" rows="3" placeholder="Was ist alles inklusive?&#10;Enter = neue Zeile"></textarea></div>
+      <div><label class="form-label">Notizen</label><textarea id="de-note" rows="3" placeholder="Eigene Notizen, Termine...&#10;Enter = neue Zeile"></textarea></div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-dienst-edit')">Abbrechen</button>
       <button class="btn btn-primary" onclick="saveDienstEdit()">Speichern</button>
