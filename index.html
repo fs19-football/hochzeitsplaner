@@ -237,7 +237,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Kategorie</th><th>Name</th><th>Kontakt</th><th>Preis</th><th>Anzahlung</th><th>Zahlungsstatus</th><th>Vertrag</th><th>Notiz</th><th></th></tr></thead>
+        <thead><tr><th>Kategorie</th><th>Name</th><th>Kontakt</th><th>🌐 Website</th><th>Preis</th><th>Anzahlung</th><th>Zahlungsstatus</th><th>Vertrag</th><th>Notiz</th><th></th></tr></thead>
         <tbody id="dienst-table"></tbody>
       </table>
     </div>
@@ -934,11 +934,12 @@ function delGast(id){state.gaeste=state.gaeste.filter(x=>x.id!==id);renderGaeste
 // ============================================================
 function renderDienst(){
   const tbody=document.getElementById('dienst-table');
-  if(!state.dienst.length){tbody.innerHTML='<tr><td colspan="9" class="empty-state">Noch keine Dienstleister.</td></tr>';return;}
+  if(!state.dienst.length){tbody.innerHTML='<tr><td colspan="10" class="empty-state">Noch keine Dienstleister.</td></tr>';return;}
   tbody.innerHTML=state.dienst.map(d=>`<tr>
     <td><strong>${d.kat}</strong></td>
     <td>${d.name}</td>
-    <td style="font-size:0.78rem">${d.tel?'📞 '+d.tel+'<br>':''}${d.email?'✉️ '+d.email+'<br>':''}${d.website?'<a href="'+d.website+'" target="_blank" style="color:var(--rose-dark);font-size:0.76rem;">🌐 Website</a>':''}</td>
+    <td style="font-size:0.78rem">${d.tel?'📞 '+d.tel+'<br>':''}${d.email?'✉️ '+d.email:''}</td>
+    <td>${d.website?'<a href="'+d.website+'" target="_blank" style="color:var(--rose-dark);font-weight:600;font-size:0.82rem;">🌐 öffnen</a>':'<span style="color:#ccc;">–</span>'}</td>
     <td>${d.price?fmt(d.price):'–'}</td>
     <td>${d.deposit?fmt(d.deposit):'–'}</td>
     <td><select onchange="updDienst(${d.id},'status',this.value)" style="width:auto">
