@@ -68,11 +68,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
 .progress-bar-bg{background:var(--rose-light);border-radius:10px;height:10px;width:100%;overflow:hidden;}
 .progress-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--rose),var(--rose-dark));transition:width 0.4s;}
 .milestone-grid{display:flex;flex-direction:column;gap:9px;}
-.milestone-item{display:flex;align-items:center;gap:13px;padding:11px 15px;border-radius:10px;border:1px solid var(--rose-light);background:white;}
+.milestone-item{display:flex;align-items:flex-start;gap:13px;padding:12px 15px;border-radius:10px;border:1px solid var(--rose-light);background:white;}
 .milestone-item.done{background:var(--green-light);border-color:var(--green);opacity:0.85;}
 .milestone-item.urgent{border-color:#f59e0b;background:#fffbeb;}
-.milestone-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--rose);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:0.9rem;}
+.milestone-item.in-progress{border-color:#60a5fa;background:#eff6ff;}
+.milestone-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--rose);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:0.75rem;margin-top:1px;transition:all 0.15s;}
+.milestone-check:hover{transform:scale(1.15);}
 .milestone-item.done .milestone-check{background:var(--green);border-color:var(--green);color:white;}
+.milestone-item.in-progress .milestone-check{background:#dbeafe;border-color:#3b82f6;color:#1e40af;font-size:0.85rem;}
 .milestone-content{flex:1;}
 .milestone-title{font-weight:600;font-size:0.88rem;}
 .milestone-title.done-text{text-decoration:line-through;color:var(--text-light);}
@@ -317,11 +320,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose);ba
   <div class="modal">
     <div class="modal-title">🗓️ Meilenstein hinzufügen</div>
     <div class="form-row"><label class="form-label">Aufgabe</label><input type="text" id="ms-title" placeholder="z.B. Location buchen"/></div>
-    <div class="form-row-2">
+    <div class="form-row-3">
       <div><label class="form-label">Bis wann?</label><input type="date" id="ms-date"/></div>
+      <div><label class="form-label">Status</label><select id="ms-status"><option value="offen">⬜ Offen</option><option value="in-bearbeitung">🔄 In Bearbeitung</option><option value="erledigt">✅ Erledigt</option></select></div>
       <div><label class="form-label">Priorität</label><select id="ms-prio"><option value="normal">Normal</option><option value="urgent">Dringend ⚠️</option></select></div>
     </div>
-    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="ms-note" placeholder="Optional..."/></div>
+    <div class="form-row"><label class="form-label">Notiz</label><textarea id="ms-note" rows="3" placeholder="Optionale Notiz...&#10;Enter = neue Zeile"></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-milestone')">Abbrechen</button>
       <button class="btn btn-primary" onclick="addMilestone()">Hinzufügen</button>
@@ -708,19 +712,35 @@ let msDoneOpen = false;
 function renderMilestones(){
   const el=document.getElementById('milestone-list');
   if(!state.milestones.length){el.innerHTML='<div class="empty-state">Noch keine Meilensteine.</div>';return;}
+  state.milestones.forEach(m=>{if(m.status===undefined){m.status=m.done?'erledigt':'offen';}});
   const s=[...state.milestones].sort((a,b)=>new Date(a.date)-new Date(b.date));
-  const open=s.filter(m=>!m.done);
-  const done=s.filter(m=>m.done);
-  const renderItem=m=>`
-    <div class="milestone-item ${m.done?'done':''} ${m.prio==='urgent'&&!m.done?'urgent':''}">
-      <div class="milestone-check" onclick="toggleMs(${m.id})">${m.done?'✓':''}</div>
+  const open=s.filter(m=>m.status!=='erledigt');
+  const done=s.filter(m=>m.status==='erledigt');
+  const statusBadge={
+    'offen':'<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.68rem;font-weight:700;background:#f3f4f6;color:#6b7280;">⬜ Offen</span>',
+    'in-bearbeitung':'<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.68rem;font-weight:700;background:#dbeafe;color:#1e40af;">🔄 In Bearbeitung</span>',
+    'erledigt':'<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.68rem;font-weight:700;background:var(--green-light);color:#2d6a31;">✅ Erledigt</span>'
+  };
+  const checkIcon={'offen':'','in-bearbeitung':'🔄','erledigt':'✓'};
+  const renderItem=m=>{
+    const isDone=m.status==='erledigt';
+    const isInProgress=m.status==='in-bearbeitung';
+    const isUrgent=m.prio==='urgent'&&!isDone;
+    const noteHtml=m.note?`<div style="margin-top:4px;font-size:0.76rem;color:var(--text-light);line-height:1.5;">${escHtml(m.note).replace(/\n/g,'<br>')}</div>`:'';
+    return `<div class="milestone-item ${isDone?'done':''} ${isUrgent?'urgent':''} ${isInProgress?'in-progress':''}">
+      <div class="milestone-check" onclick="cycleMs(${m.id})" title="Status wechseln">${checkIcon[m.status]||''}</div>
       <div class="milestone-content">
-        <div class="milestone-title ${m.done?'done-text':''}">${m.prio==='urgent'&&!m.done?'⚠️ ':''}${m.title}</div>
-        <div class="milestone-date">${fmtDate(m.date)}${m.note?' · '+m.note:''}</div>
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+          <span class="milestone-title ${isDone?'done-text':''}">${isUrgent?'⚠️ ':''}${escHtml(m.title)}</span>
+          ${statusBadge[m.status]||''}
+        </div>
+        <div class="milestone-date" style="margin-top:3px;">${fmtDate(m.date)}</div>
+        ${noteHtml}
       </div>
       <button class="btn btn-secondary btn-sm" onclick="openMilestoneEdit(${m.id})">✏️</button>
       <button class="btn btn-danger btn-sm" onclick="deleteMs(${m.id})">✕</button>
     </div>`;
+  };
   let html = open.map(renderItem).join('');
   if(done.length){
     html += `
@@ -738,11 +758,21 @@ function toggleMsDone(){msDoneOpen=!msDoneOpen;renderMilestones();}
 function addMilestone(){
   const t=document.getElementById('ms-title').value.trim();if(!t)return;
   state.msC++;
-  state.milestones.push({id:state.msC,title:t,date:document.getElementById('ms-date').value,prio:document.getElementById('ms-prio').value,note:document.getElementById('ms-note').value,done:false});
+  const st=document.getElementById('ms-status').value;
+  state.milestones.push({id:state.msC,title:t,date:document.getElementById('ms-date').value,prio:document.getElementById('ms-prio').value,status:st,note:document.getElementById('ms-note').value,done:st==='erledigt'});
   ['ms-title','ms-date','ms-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ms-status').value='offen';
   closeModal('modal-milestone');renderMilestones();save();
 }
-function toggleMs(id){const m=state.milestones.find(x=>x.id===id);if(m){m.done=!m.done;renderMilestones();save();}}
+function cycleMs(id){
+  const m=state.milestones.find(x=>x.id===id);if(!m)return;
+  if(!m.status)m.status=m.done?'erledigt':'offen';
+  const next={'offen':'in-bearbeitung','in-bearbeitung':'erledigt','erledigt':'offen'};
+  m.status=next[m.status]||'offen';
+  m.done=m.status==='erledigt';
+  renderMilestones();save();
+}
+function toggleMs(id){cycleMs(id);}
 function deleteMs(id){state.milestones=state.milestones.filter(x=>x.id!==id);renderMilestones();save();}
 
 // ============================================================
@@ -1343,6 +1373,7 @@ function openMilestoneEdit(id){
   document.getElementById('mse-title').value=m.title||'';
   document.getElementById('mse-date').value=m.date||'';
   document.getElementById('mse-prio').value=m.prio||'normal';
+  document.getElementById('mse-status').value=m.status||(m.done?'erledigt':'offen');
   document.getElementById('mse-note').value=m.note||'';
   openModal('modal-milestone-edit');
 }
@@ -1351,6 +1382,8 @@ function saveMilestoneEdit(){
   m.title=document.getElementById('mse-title').value;
   m.date=document.getElementById('mse-date').value;
   m.prio=document.getElementById('mse-prio').value;
+  m.status=document.getElementById('mse-status').value;
+  m.done=m.status==='erledigt';
   m.note=document.getElementById('mse-note').value;
   closeModal('modal-milestone-edit'); renderMilestones(); save(); editingMsId=null;
 }
@@ -1492,6 +1525,7 @@ window.openModal = openModal;
 window.closeModal = closeModal;
 window.onDateChange = onDateChange;
 window.addMilestone = addMilestone;
+window.cycleMs = cycleMs;
 window.toggleMs = toggleMs;
 window.toggleMsDone = toggleMsDone;
 window.deleteMs = deleteMs;
@@ -1647,11 +1681,12 @@ window.setIdeenFilter = setIdeenFilter;
   <div class="modal">
     <div class="modal-title">✏️ Meilenstein bearbeiten</div>
     <div class="form-row"><label class="form-label">Aufgabe</label><input type="text" id="mse-title" placeholder="z.B. Location buchen"/></div>
-    <div class="form-row-2">
+    <div class="form-row-3">
       <div><label class="form-label">Bis wann?</label><input type="date" id="mse-date"/></div>
+      <div><label class="form-label">Status</label><select id="mse-status"><option value="offen">⬜ Offen</option><option value="in-bearbeitung">🔄 In Bearbeitung</option><option value="erledigt">✅ Erledigt</option></select></div>
       <div><label class="form-label">Priorität</label><select id="mse-prio"><option value="normal">Normal</option><option value="urgent">Dringend ⚠️</option></select></div>
     </div>
-    <div class="form-row"><label class="form-label">Notiz</label><input type="text" id="mse-note" placeholder="Optional..."/></div>
+    <div class="form-row"><label class="form-label">Notiz</label><textarea id="mse-note" rows="3" placeholder="Optionale Notiz...&#10;Enter = neue Zeile"></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-milestone-edit')">Abbrechen</button>
       <button class="btn btn-primary" onclick="saveMilestoneEdit()">Speichern</button>
