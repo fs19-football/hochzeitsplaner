@@ -624,30 +624,38 @@ async function save(){
   }
 }
 async function load(){
-
   try{
-
-    if(window.loadFromCloud){
-      const cloudData = await window.loadFromCloud();
-
-      if(cloudData){
-    state = {...state, ...cloudData};
-
-    console.log("Cloud geladen:", state.totalBudget);
-
-    return;
-      }
+    // Erst Cloud versuchen
+    const cloudData = await window.loadFromCloud();
+    if(cloudData && typeof cloudData === 'object'){
+      // Arrays aus Firestore können als Objekte kommen – normalisieren
+      const fix = (val) => {
+        if(val === null || val === undefined) return val;
+        if(Array.isArray(val)) return val;
+        if(typeof val === 'object'){
+          const keys = Object.keys(val);
+          if(keys.length === 0) return [];
+          if(keys.every(k => !isNaN(Number(k)))) return keys.sort((a,b)=>Number(a)-Number(b)).map(k=>val[k]);
+        }
+        return val;
+      };
+      state = {...state, ...cloudData};
+      // Sicherstellen dass alle Arrays wirklich Arrays sind
+      ['milestones','budget','gaeste','dienst','locations','ablauf','tischObjects','ideen','konto'].forEach(key=>{
+        if(state[key] !== undefined) state[key] = fix(state[key]);
+      });
+      console.log("✅ Cloud geladen:", state.totalBudget);
+      return;
     }
-
+    console.warn("⚠️ Keine Cloud-Daten – lade LocalStorage");
     const s = localStorage.getItem('wp27_v2');
-
-    if(s){
-      const p = JSON.parse(s);
-      state = {...state, ...p};
-    }
-
+    if(s){ const p = JSON.parse(s); state = {...state, ...p}; }
   }catch(e){
-    console.error(e);
+    console.error("❌ Load-Fehler:", e);
+    try{
+      const s = localStorage.getItem('wp27_v2');
+      if(s){ const p = JSON.parse(s); state = {...state, ...p}; }
+    }catch(e2){}
   }
 }
 
