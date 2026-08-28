@@ -1,0 +1,2498 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Trainings-Dashboard · KI-Radcoach</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- App-Icon für iPhone/iPad Homescreen -->
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <!-- Favicon für Browser-Tabs (Edge etc.) -->
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon.png">
+  <!-- PWA-Name -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="FS Cycling">
+
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    :root{
+      --bg:        #f8f7f4;
+      --surface:   #ffffff;
+      --surface2:  #f2f0ec;
+      --border:    #e4e0d8;
+      --border2:   #ccc9c0;
+      --text:      #111111;
+      --text2:     #333333;
+      --text3:     #888888;
+      --accent:    #111111;
+      --accent2:   #333333;
+      --green:     #2d7a3a;
+      --orange:    #b85c00;
+      --red:       #b91c1c;
+      --purple:    #5b21b6;
+      --cyan:      #0e7490;
+    }
+
+    body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+    @keyframes spin   {to{transform:rotate(360deg)}}
+    @keyframes fadeUp {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes bounce {0%,80%,100%{transform:translateY(0);opacity:.3}40%{transform:translateY(-5px);opacity:1}}
+    @keyframes blink  {0%,100%{opacity:1}50%{opacity:.2}}
+    @keyframes toast  {from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes barGrow{from{width:0}}
+
+    .spin{animation:spin .8s linear infinite;display:inline-block}
+    .fade{animation:fadeUp .25s ease}
+    .goal-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--purple);border-radius:4px;padding:20px 24px;display:none}
+    .goal-card.visible{display:block;animation:fadeUp .25s ease}
+    .goal-title{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;letter-spacing:.2px;color:var(--text)}
+    .goal-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+    .goal-chip{background:var(--surface2);border:1px solid var(--border2);border-radius:999px;padding:4px 10px;font-size:11px;color:var(--text2)}
+    .goal-empty{font-size:13px;color:var(--text3);line-height:1.6}
+
+    /* ── HEADER ── */
+    header{
+      background:var(--surface);
+      border-bottom:1px solid var(--border);
+      position:sticky;top:0;z-index:100;
+    }
+    .topbar{
+      max-width:1280px;margin:0 auto;
+      padding:0 32px;height:64px;
+      display:flex;align-items:center;justify-content:space-between;gap:16px;
+    }
+    .logo{display:flex;align-items:center;gap:12px}
+    .logo-icon{
+      width:32px;height:32px;border-radius:50%;
+      overflow:hidden;flex-shrink:0;
+    }
+    .logo-icon img{width:32px;height:32px;display:block;object-fit:cover;border-radius:50%}
+    .logo-title{
+      font-family:'Space Grotesk',system-ui,sans-serif;
+      font-size:17px;font-weight:700;letter-spacing:-.2px;
+      color:var(--text);
+    }
+    .logo-sub{font-size:10px;color:var(--text3);font-weight:400;letter-spacing:.06em;text-transform:uppercase;margin-top:1px}
+    .connection-pill{
+      display:flex;align-items:center;gap:6px;
+      background:transparent;border:1px solid var(--border2);
+      border-radius:999px;padding:5px 14px;
+      font-size:11px;font-weight:500;color:var(--text3);
+      letter-spacing:.03em;
+    }
+    .connection-pill.ok{color:var(--green);border-color:rgba(45,122,58,.3)}
+    .live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+
+    /* ── NAV TABS ── */
+    .nav-wrap{background:var(--surface);border-bottom:1px solid var(--border)}
+    nav{max-width:1280px;margin:0 auto;padding:0 32px;display:flex;gap:0}
+    .tab-btn{
+      background:none;border:none;border-bottom:1.5px solid transparent;
+      color:var(--text3);padding:13px 20px;cursor:pointer;
+      font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:500;
+      letter-spacing:.06em;text-transform:uppercase;
+      transition:all .18s;display:flex;align-items:center;gap:7px;
+      white-space:nowrap;
+    }
+    .tab-btn .ti{font-size:13px}
+    .tab-btn:hover:not(.active){color:var(--text2)}
+    .tab-btn.active{color:var(--text);border-bottom-color:var(--text);font-weight:700}
+    .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+    /* ── MAIN ── */
+    main{max-width:1280px;margin:0 auto;padding:36px 32px;display:flex;flex-direction:column;gap:28px}
+
+    /* ── SECTION LABEL ── */
+    .section-label{
+      font-size:10px;font-weight:700;color:var(--text3);
+      text-transform:uppercase;letter-spacing:.12em;margin-bottom:14px;
+    }
+
+    /* ── CARDS ── */
+    .card{
+      background:var(--surface);border:1px solid var(--border);border-radius:4px;
+      padding:24px;
+    }
+    .card-label{
+      font-size:10px;font-weight:700;color:var(--text3);
+      text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;
+      display:flex;align-items:center;gap:8px;
+    }
+    .card-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+    /* ── STAT CARDS ── */
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+    .stat-card{
+      background:var(--surface);
+      padding:24px 22px;position:relative;overflow:hidden;
+      transition:background .2s;cursor:default;
+    }
+    .stat-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+      background:var(--c,var(--text));opacity:.15;
+    }
+    .stat-card:hover{background:var(--surface2)}
+    .stat-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+    .stat-value{font-family:'Space Grotesk',system-ui,sans-serif;font-size:40px;font-weight:700;color:var(--text);letter-spacing:-.5px;line-height:1}
+    .stat-unit{font-size:13px;font-weight:400;color:var(--text3);margin-left:3px}
+    .stat-sub{font-size:11px;color:var(--text3);margin-top:8px;font-weight:400}
+
+    /* ── BUTTONS ── */
+    .btn{
+      display:inline-flex;align-items:center;gap:7px;
+      border:none;border-radius:999px;cursor:pointer;
+      font-family:'Space Grotesk',sans-serif;font-weight:600;
+      transition:all .15s;white-space:nowrap;
+    }
+    .btn:disabled{opacity:.35;cursor:not-allowed}
+    .btn-primary{
+      background:var(--text);color:#fff;
+      padding:9px 20px;font-size:12px;letter-spacing:.02em;
+    }
+    .btn-primary:hover:not(:disabled){background:var(--text2)}
+    .btn-danger{
+      background:var(--text);color:#fff;
+      padding:9px 20px;font-size:12px;font-weight:700;letter-spacing:.03em;
+    }
+    .btn-danger:hover:not(:disabled){background:var(--text2)}
+    .btn-ghost{
+      background:transparent;border:1px solid var(--border2);color:var(--text2);
+      padding:8px 16px;font-size:12px;border-radius:999px;
+    }
+    .btn-ghost:hover{border-color:var(--text);color:var(--text)}
+    .btn-green{
+      background:transparent;border:1px solid rgba(45,122,58,.35);
+      color:var(--green);padding:6px 14px;font-size:11px;font-weight:600;border-radius:999px;
+    }
+    .btn-green:hover{background:rgba(45,122,58,.08)}
+
+    /* ── CHART AREA ── */
+    .chart-card{display:flex;flex-direction:column;min-height:300px}
+    .chart-toggles{display:flex;gap:6px;flex-wrap:wrap}
+    .ctoggle{
+      display:flex;align-items:center;gap:5px;
+      padding:4px 12px;border-radius:999px;border:1px solid var(--border2);
+      background:transparent;color:var(--text3);font-family:'Space Grotesk',sans-serif;
+      font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;
+      letter-spacing:.02em;
+    }
+    .ctoggle .dot{width:6px;height:6px;border-radius:50%;background:var(--tc,var(--text))}
+    .ctoggle.on{background:color-mix(in srgb,var(--tc) 10%,transparent);border-color:color-mix(in srgb,var(--tc) 35%,transparent);color:var(--text)}
+    .ctoggle:not(.on){opacity:.45}
+    .chart-area{flex:1;position:relative;min-height:220px;margin-top:16px}
+    .chart-area canvas{position:absolute;inset:0;width:100%;height:100%}
+    .chart-legend{font-size:10px;color:var(--text3);margin-top:10px;letter-spacing:.04em}
+
+    /* ── FORM WIDGET ── */
+    .form-big{
+      font-family:'Space Grotesk',system-ui,sans-serif;font-size:52px;font-weight:700;
+      line-height:1;letter-spacing:-1px;
+    }
+    .metric-pill{
+      background:var(--surface2);border:1px solid var(--border);border-radius:4px;
+      padding:12px 14px;
+    }
+    .metric-val{font-family:'Space Grotesk',system-ui,sans-serif;font-size:26px;font-weight:700;letter-spacing:-.5px}
+
+    /* ── KI ANALYSE ── */
+    .analysis-box{
+      background:var(--surface2);border:1px solid var(--border);border-radius:4px;
+      padding:20px;font-size:13px;line-height:1.9;color:var(--text2);
+      white-space:pre-wrap;min-height:130px;
+    }
+    .tour-stat{
+      background:var(--surface2);border:1px solid var(--border);
+      border-radius:4px;padding:16px;text-align:center;
+    }
+    .tour-stat-val{font-family:'Space Grotesk',system-ui,sans-serif;font-size:26px;font-weight:700;letter-spacing:-.5px}
+    .tour-stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px}
+    .tour-stat-unit{font-size:11px;color:var(--text3);margin-top:3px}
+
+    /* ── ACTIVITIES ── */
+    .act-row{
+      background:var(--surface);border:1px solid var(--border);border-radius:4px;
+      overflow:hidden;margin-bottom:6px;transition:border-color .2s;
+    }
+    .act-row:hover{border-color:var(--border2)}
+    .act-header{
+      padding:14px 20px;cursor:pointer;
+      display:grid;align-items:center;gap:12px;
+      grid-template-columns:1fr repeat(4,90px) 120px 24px;
+    }
+    .act-body{border-top:1px solid var(--border);padding:18px 20px;background:var(--surface2)}
+    .act-name{font-weight:600;font-size:14px;color:var(--text);margin-bottom:2px}
+    .act-date{font-size:11px;color:var(--text3);font-weight:400}
+    .act-metric{font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px}
+
+    /* ── CHAT ── */
+    .chat-wrap{
+      background:var(--surface);border:1px solid var(--border);border-radius:4px;
+      display:flex;flex-direction:column;height:640px;overflow:hidden;
+    }
+    .chat-header{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    .chat-msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+    .chat-footer{border-top:1px solid var(--border);padding:14px 18px;display:flex;gap:10px;align-items:center}
+    .chat-input{
+      flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:999px;
+      padding:10px 18px;color:var(--text);font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none;
+      transition:border-color .15s;
+    }
+    .chat-input:focus{border-color:var(--text)}
+    .chat-input::placeholder{color:var(--text3)}
+    .quick-row{padding:10px 18px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap}
+    .quick-btn{
+      background:var(--surface2);border:1px solid var(--border2);border-radius:999px;
+      padding:4px 12px;color:var(--text2);font-size:11px;font-weight:500;
+      cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .15s;
+      letter-spacing:.02em;
+    }
+    .quick-btn:hover{border-color:var(--text);color:var(--text)}
+    .model-toggle{
+      display:flex;background:var(--surface2);border:1px solid var(--border2);
+      border-radius:999px;overflow:hidden;
+    }
+    .model-btn{
+      background:none;border:none;color:var(--text3);
+      padding:5px 14px;cursor:pointer;font-size:11px;font-weight:600;
+      font-family:'Space Grotesk',sans-serif;transition:all .15s;
+    }
+    .model-btn.active{background:var(--text);color:#fff;border-radius:999px}
+
+    /* ── CHAT BUBBLES ── */
+    .msg-user{align-self:flex-end;background:var(--text);color:#fff;border-radius:18px 18px 4px 18px;padding:10px 16px;max-width:75%;font-size:13px;line-height:1.6}
+    .msg-ai{align-self:flex-start;background:var(--surface2);border:1px solid var(--border);border-radius:4px 18px 18px 18px;padding:14px 18px;max-width:80%;font-size:13px;line-height:1.8;color:var(--text2)}
+    .msg-ai h1,.msg-ai h2,.msg-ai h3{font-family:'Space Grotesk',system-ui,sans-serif;color:var(--text);margin:12px 0 6px}
+    .msg-ai h2{font-size:17px}.msg-ai h3{font-size:14px}
+    .msg-ai p{margin:8px 0}
+    .msg-ai ul{margin:8px 0 10px 20px}
+    .msg-ai li{margin:5px 0}
+    .msg-ai strong{color:var(--text);font-weight:700}
+    .msg-ai code{background:var(--surface2);border:1px solid var(--border);padding:1px 6px;border-radius:3px;font-size:12px}
+    .msg-ai hr{border:0;border-top:1px solid var(--border);margin:12px 0}
+    .msg-ai blockquote{margin:10px 0;padding:10px 14px;border-left:2px solid var(--border2);color:var(--text3)}
+
+    /* ── INPUT ── */
+    .field-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px}
+    .field{
+      width:100%;background:var(--surface);border:1px solid var(--border2);
+      border-radius:4px;padding:9px 12px;color:var(--text);
+      font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none;
+      transition:border-color .15s;
+    }
+    .field:focus{border-color:var(--text)}
+    .field::placeholder{color:var(--text3)}
+    select.field option{background:var(--surface);color:var(--text)}
+
+    /* ── PROGRESS BAR ── */
+    .prog-track{width:100%;height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-top:10px}
+    .prog-fill{height:100%;border-radius:1px;animation:barGrow .8s ease}
+
+    /* ── HEALTH ── */
+    .hr-table{width:100%;border-collapse:collapse;font-size:13px}
+    .hr-table th{
+      text-align:left;color:var(--text);font-weight:700;padding:11px 14px;
+      border-bottom:1px solid var(--border);font-size:10px;
+      text-transform:uppercase;letter-spacing:.1em;
+      background:var(--surface2);
+    }
+    .hr-table th:first-child{border-radius:0}
+    .hr-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text2)}
+    .hr-table tr:last-child td{border-bottom:none}
+    .hr-table tr:hover td{background:var(--surface2)}
+    .badge{
+      display:inline-flex;align-items:center;gap:4px;
+      padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;
+    }
+
+    /* ── BIKE ── */
+    .bike-header-card{
+      background:var(--surface);
+      border:1px solid var(--border);border-radius:4px;padding:28px;
+    }
+    .maint-row{padding:16px 0;border-bottom:1px solid var(--border)}
+    .maint-row:last-child{border-bottom:none}
+    .archive-card{
+      background:var(--surface2);border:1px solid var(--border);border-radius:4px;
+      padding:16px;display:flex;align-items:center;gap:14px;
+      margin-bottom:6px;opacity:.7;
+    }
+
+    /* ── MODAL ── */
+    .modal-bg{
+      position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;
+      display:flex;align-items:center;justify-content:center;
+      animation:fadeUp .2s ease;
+    }
+    .modal{
+      background:var(--surface);border:1px solid var(--border);border-radius:4px;
+      padding:32px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;
+      animation:fadeUp .2s ease;
+    }
+
+    /* ── NOTICE / DEMO BAR ── */
+    .demo-bar{
+      display:flex;align-items:center;gap:10px;
+      background:var(--surface2);border:1px solid var(--border);
+      border-radius:4px;padding:12px 18px;font-size:12px;color:var(--text2);
+    }
+
+    /* ── FILTER BAR ── */
+    .filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+
+    /* ── GOAL ── */
+    .goal-display{
+      font-family:'Space Grotesk',system-ui,sans-serif;
+      font-size:20px;font-weight:700;color:var(--text);margin-bottom:12px;line-height:1.4;
+    }
+
+    /* ── TOAST ── */
+    .toast-msg{
+      position:fixed;right:24px;bottom:24px;
+      background:var(--text);color:#fff;
+      padding:12px 18px;border-radius:999px;
+      font-size:12px;font-weight:600;letter-spacing:.02em;
+      animation:toast .25s ease;z-index:300;
+    }
+    .toast-msg.error{background:var(--red)}
+
+    /* ── HEATMAP ── */
+    .heatmap-row{display:flex;gap:5px;align-items:center}
+    .heatmap-label{font-size:10px;color:var(--text3);width:28px;text-align:right;flex-shrink:0}
+    .heatmap-grid{display:flex;gap:3px}
+    .heatmap-cell{
+      width:14px;height:14px;border-radius:2px;flex-shrink:0;
+    }
+
+    /* ── MAINT REMINDER ── */
+    #maintReminderBox{display:none;align-items:center;gap:10px;background:rgba(184,92,0,.07);border:1px solid rgba(184,92,0,.25);border-radius:4px;padding:12px 16px;font-size:12px;color:var(--orange);margin-bottom:16px}
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px){
+      main{padding:20px 16px;gap:16px}
+      .topbar{padding:0 16px;height:56px}
+      nav{padding:0 8px}
+      .stat-grid{grid-template-columns:1fr 1fr;gap:10px}
+      .act-header{grid-template-columns:1fr 80px 80px 80px 80px;gap:8px}
+      .act-header > *:nth-child(6),.act-header > *:nth-child(7){display:none}
+    }
+    @media(max-width:640px){
+      /* Header */
+      .topbar{padding:0 14px;height:52px;gap:10px}
+      .logo-title{font-size:14px}
+      .logo-sub{display:none}
+      .logo-icon{width:28px;height:28px}
+      .connection-pill{padding:4px 10px;font-size:10px}
+      .connection-pill > div > div:last-child{display:none}
+      #syncBtn{padding:7px 12px;font-size:11px}
+      #syncBtn svg{width:11px;height:11px}
+
+      /* Nav */
+      nav{padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+      nav::-webkit-scrollbar{display:none}
+      .tab-btn{padding:10px 14px;font-size:10px;white-space:nowrap;flex-shrink:0}
+      .tab-btn .ti{font-size:12px}
+
+      /* Main */
+      main{padding:14px 12px;gap:12px}
+
+      /* Stats grid: 2 cols */
+      .stat-grid{grid-template-columns:1fr 1fr;gap:8px}
+      .stat-card{padding:14px 12px}
+      .stat-value{font-size:28px}
+      .stat-label{font-size:9px}
+      .stat-sub{font-size:10px}
+
+      /* Cards */
+      .card{padding:16px 14px}
+      .card-label{font-size:9px}
+
+      /* Chart area: stack vertically */
+      .two-col{grid-template-columns:1fr!important;flex-direction:column}
+      .settings-grid{grid-template-columns:1fr}
+
+      /* Activities */
+      .act-header{grid-template-columns:1fr 70px 70px;gap:6px;font-size:11px}
+      .act-header > *:nth-child(4),.act-header > *:nth-child(5),
+      .act-header > *:nth-child(6),.act-header > *:nth-child(7){display:none}
+      .act-item{grid-template-columns:1fr 70px 70px;gap:6px;font-size:12px}
+      .act-item > *:nth-child(4),.act-item > *:nth-child(5),
+      .act-item > *:nth-child(6),.act-item > *:nth-child(7){display:none}
+
+      /* Coach */
+      .coach-input-row{flex-direction:column;gap:8px}
+      .coach-input-row button{width:100%}
+
+      /* HR table */
+      .hr-table th:nth-child(3),.hr-table td:nth-child(3){display:none}
+
+      /* Fuel */
+      .intensity-grid{grid-template-columns:1fr}
+      .fuel-results-grid,.fuel-timing-grid{grid-template-columns:1fr 1fr}
+      .add-form-fc-grid{grid-template-columns:1fr 1fr}
+      .pack-item{grid-template-columns:1fr auto}
+      .pack-stock{display:none}
+
+      /* Modals */
+      .modal-box{padding:20px;margin:16px}
+    }
+
+    /* ══════════════════════════════════════
+       FUEL CALCULATOR
+    ══════════════════════════════════════ */
+    .duration-display{font-family:'Space Grotesk',system-ui,sans-serif;font-size:clamp(40px,6vw,58px);font-weight:700;line-height:1;margin-bottom:22px;letter-spacing:-1px}
+    .duration-display span{font-size:50%;color:var(--text3);font-weight:400}
+    input[type="range"]{-webkit-appearance:none;width:100%;height:2px;background:var(--border2);border-radius:1px;outline:none;cursor:pointer}
+    input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.2);transition:transform .15s}
+    input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+    input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;border:none;background:var(--text)}
+    .slider-labels{display:flex;justify-content:space-between;margin-top:9px;font-size:10px;color:var(--text3);font-weight:500}
+    .intensity-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .int-btn{background:var(--surface2);border:1.5px solid var(--border2);border-radius:4px;padding:16px 14px;cursor:pointer;text-align:left;transition:all .18s;font-family:'Space Grotesk',sans-serif}
+    .int-btn:hover:not(.int-active){border-color:var(--text2);background:var(--surface2)}
+    .int-btn.int-active{border-color:var(--text);background:var(--text);color:#fff}
+    .int-name{font-size:13px;font-weight:700;display:block;margin-bottom:4px}
+    .int-zone{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;display:block;transition:color .18s}
+    .int-btn.int-active .int-zone{color:rgba(255,255,255,.45)}
+    .int-desc{font-size:11px;color:var(--text3);line-height:1.5;transition:color .18s}
+    .int-btn.int-active .int-desc{color:rgba(255,255,255,.6)}
+    .fuel-results-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+    .fuel-result-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:20px 20px 18px;position:relative;overflow:hidden}
+    .fuel-result-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:var(--fc,var(--text));opacity:.2}
+    .fuel-result-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+    .fuel-result-value{font-family:'Space Grotesk',system-ui,sans-serif;font-size:clamp(26px,4vw,34px);font-weight:700;color:var(--text);line-height:1;letter-spacing:-.5px;margin-bottom:5px;transition:all .3s}
+    .fuel-result-value .unit{font-size:40%;color:var(--text3);font-weight:400;margin-left:2px}
+    .fuel-result-sub{font-size:12px;color:var(--text3)}
+    .fuel-timing-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+    .fuel-timing-card{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:14px 16px}
+    .fuel-timing-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+    .fuel-timing-value{font-size:14px;font-weight:600;color:var(--text2)}
+    .fuel-hint{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:16px 18px;font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:8px}
+    .fuel-hint strong{color:var(--text);font-weight:700}
+    .pack-section{margin-top:32px}
+    .pack-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+    .pack-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+    .pack-item{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px 14px;display:grid;align-items:center;gap:10px;grid-template-columns:1fr auto auto}
+    .pack-item-name{font-size:13px;font-weight:600;color:var(--text)}
+    .pack-item-detail{font-size:11px;color:var(--text3);margin-top:2px}
+    .qty-control{display:flex;align-items:center;gap:7px}
+    .qty-btn{width:26px;height:26px;border-radius:50%;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .15s;line-height:1;font-family:'Space Grotesk',sans-serif}
+    .qty-btn:hover{border-color:var(--text);background:var(--text);color:#fff}
+    .qty-val{font-family:'Space Grotesk',system-ui,sans-serif;font-size:18px;font-weight:700;color:var(--text);min-width:22px;text-align:center}
+    .pack-stock{font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap}
+    .pack-stock.ok {background:rgba(45,122,58,.1);color:var(--green);border:1px solid rgba(45,122,58,.2)}
+    .pack-stock.low{background:rgba(184,92,0,.1);color:var(--orange);border:1px solid rgba(184,92,0,.2)}
+    .pack-stock.out{background:rgba(185,28,28,.1);color:var(--red);border:1px solid rgba(185,28,28,.2)}
+    .pack-summary{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:12px 14px;font-size:12px;color:var(--text2);line-height:1.8}
+    .pack-summary strong{color:var(--text)}
+    .pack-empty{font-size:13px;color:var(--text3);padding:16px 0}
+    .stock-list-fc{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+    .stock-item-fc{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .stock-name-fc{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+    .stock-meta-fc{font-size:11px;color:var(--text3)}
+    .stock-qty-input{width:64px;text-align:center;font-family:'Space Grotesk',system-ui,sans-serif;font-size:17px;font-weight:700;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:5px 8px;color:var(--text);outline:none}
+    .stock-qty-input:focus{border-color:var(--text)}
+    .add-form-fc{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:20px}
+    .add-form-fc-grid{display:grid;grid-template-columns:1fr 1fr 90px 90px;gap:10px;margin-bottom:12px}
+    .add-form-fc-grid .span2{grid-column:span 2}
+    .fc-divider{height:1px;background:var(--border);margin:28px 0}
+    .fc-sub-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;margin-bottom:14px;display:block}
+    .fc-page-sub{font-size:14px;color:var(--text3);line-height:1.6;margin-bottom:36px;max-width:480px}
+    @keyframes fcFadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+    .fc-updated{animation:fcFadeUp .25s ease}
+    @media(max-width:640px){.intensity-grid{grid-template-columns:1fr}.fuel-results-grid,.fuel-timing-grid{grid-template-columns:1fr 1fr}.add-form-fc-grid{grid-template-columns:1fr 1fr}}
+
+    /* ── LOGIN ── */
+    body:not(.is-authenticated) > header,
+    body:not(.is-authenticated) > .nav-wrap,
+    body:not(.is-authenticated) > main { display:none; }
+    .login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000}
+    .login-card{width:min(420px,100%);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:32px;box-shadow:0 16px 50px rgba(0,0,0,.08)}
+    .login-mark{width:48px;height:48px;border-radius:50%;overflow:hidden;margin-bottom:18px;border:1px solid var(--border)}
+    .login-mark img{width:100%;height:100%;object-fit:cover}
+    .login-title{font-size:26px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
+    .login-subtitle{font-size:13px;color:var(--text3);line-height:1.6;margin-bottom:24px}
+    .login-error{display:none;background:rgba(185,28,28,.08);border:1px solid rgba(185,28,28,.25);color:var(--red);padding:10px 12px;border-radius:4px;font-size:12px;line-height:1.5;margin-bottom:14px}
+    .login-btn{width:100%;justify-content:center;margin-top:8px}
+    .logout-btn{display:none}
+    body.is-authenticated .login-overlay{display:none}
+    @media(max-width:640px){.login-card{padding:24px}.logout-btn{display:inline-flex}}
+  </style>
+</head>
+<body>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-mark"><img src="apple-touch-icon.png" alt="FS Cycling"></div>
+    <div class="login-title">KI-Radcoach</div>
+    <div class="login-subtitle">Melde dich an, um auf dein persönliches Trainings-Dashboard zuzugreifen.</div>
+    <div class="login-error" id="loginError"></div>
+    <form onsubmit="event.preventDefault();loginUser();">
+      <label class="field-label" for="loginEmail">E-Mail</label>
+      <input class="field" id="loginEmail" type="email" autocomplete="username" value="stoehr_frank@gmx.de" required>
+      <label class="field-label" for="loginPassword" style="margin-top:14px">Passwort</label>
+      <input class="field" id="loginPassword" type="password" autocomplete="current-password" required>
+      <button class="btn btn-primary login-btn" id="loginBtn" type="submit">Anmelden</button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════ -->
+<header>
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-icon">
+        <img src="apple-touch-icon.png" alt="FS Cycling">
+      </div>
+      <div>
+        <div class="logo-title">Trainings-Dashboard</div>
+        <div class="logo-sub">KI-Radcoach · Frank</div>
+      </div>
+    </div>
+
+    <div class="connection-pill" id="connPill">
+      <div class="live-dot" id="connDot" style="background:var(--orange);animation:none"></div>
+      <div>
+        <span id="connText">Verbindung wird geprüft …</span>
+        <div id="lastSyncText" style="font-size:9px;color:var(--text3);font-weight:500;margin-top:1px"></div>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost logout-btn" onclick="logoutUser()" id="logoutBtn" title="Abmelden">Abmelden</button>
+    <button class="btn btn-ghost" onclick="createAdditionalUser()" id="adminUserBtn" style="display:none" title="Weiteren Nutzer anlegen">+ Nutzer</button>
+
+    <button class="btn btn-danger" onclick="connectOrSync()" id="syncBtn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      </svg>
+      <span id="syncBtnLabel">Strava Sync</span>
+    </button>
+  </div>
+</header>
+
+<div class="nav-wrap">
+  <nav>
+    <button class="tab-btn active" onclick="switchTab('dashboard',this)"><span class="ti">▦</span> Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('activities',this)"><span class="ti">◎</span> Touren</button>
+    <button class="tab-btn" onclick="switchTab('coach',this)"><span class="ti">◈</span> Coach Chat</button>
+    <button class="tab-btn" onclick="switchTab('health',this)"><span class="ti">♡</span> Gesundheit</button>
+    <button class="tab-btn" onclick="switchTab('bike',this)"><span class="ti">⚙</span> Mein Rad</button>
+    <button class="tab-btn" onclick="switchTab('fuel',this)"><span class="ti">◉</span> Fuel Rechner</button>
+    <button class="tab-btn" onclick="switchTab('settings',this)"><span class="ti">⚙</span> Einstellungen</button>
+  </nav>
+</div>
+
+<main>
+
+<!-- ══════════════════════════════════════════
+     DASHBOARD
+══════════════════════════════════════════ -->
+<div id="tab-dashboard" class="fade">
+
+  <div class="demo-bar" id="notice" style="display:none">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span id="noticeText">Noch keine Verbindung zu Strava. Verbinde dein Konto, um echte Touren zu laden.</span>
+  </div>
+
+  <div class="goal-card" id="activeGoalCard">
+    <div class="section-label" style="margin-bottom:7px">Aktives Trainingsziel</div>
+    <div class="goal-title" id="activeGoalTitle">-</div>
+    <div class="goal-meta" id="activeGoalMeta"></div>
+    <div class="goal-empty" id="activeGoalDescription" style="margin-top:10px"></div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stat-grid">
+    <div class="stat-card" style="--c:var(--accent)">
+      <div class="stat-label">Distanz · 30 Tage</div>
+      <div><span class="stat-value" id="statKm">–</span><span class="stat-unit">km</span></div>
+      <div class="stat-sub" id="statKmSub">Wird geladen …</div>
+    </div>
+    <div class="stat-card" style="--c:var(--purple)">
+      <div class="stat-label">Fahrzeit · 30 Tage</div>
+      <div><span class="stat-value" style="font-size:32px" id="statTime">–</span></div>
+      <div class="stat-sub" id="statTimeSub">Echte Aktivitäten</div>
+    </div>
+    <div class="stat-card" style="--c:var(--cyan)">
+      <div class="stat-label">Höhenmeter · 30 Tage</div>
+      <div><span class="stat-value" id="statElev">–</span><span class="stat-unit">m</span></div>
+      <div class="stat-sub">Gesamtanstieg</div>
+    </div>
+    <div class="stat-card" style="--c:var(--red)">
+      <div class="stat-label">Ø Herzfrequenz</div>
+      <div><span class="stat-value" id="statHr">–</span><span class="stat-unit">bpm</span></div>
+      <div class="stat-sub">Aus Strava-Daten</div>
+    </div>
+  </div>
+
+  <!-- CHART + FORM -->
+  <div style="display:grid;grid-template-columns:1fr 280px;gap:16px">
+
+    <!-- Chart -->
+    <div class="card chart-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div class="card-label" style="margin-bottom:0">Trainingsverlauf · 90 Tage</div>
+        <div class="chart-toggles" id="chartToggles">
+          <button class="ctoggle on" data-key="ctl" style="--tc:var(--accent)" onclick="toggleChart('ctl',this)"><span class="dot"></span>CTL</button>
+          <button class="ctoggle on" data-key="atl" style="--tc:var(--orange)" onclick="toggleChart('atl',this)"><span class="dot"></span>ATL</button>
+          <button class="ctoggle on" data-key="tsb" style="--tc:var(--green)" onclick="toggleChart('tsb',this)"><span class="dot"></span>Form</button>
+          <button class="ctoggle" data-key="km" style="--tc:var(--purple)" onclick="toggleChart('km',this)"><span class="dot"></span>Distanz</button>
+        </div>
+      </div>
+      <div class="chart-area" id="chartContainer">
+        <canvas id="loadChart"></canvas>
+      </div>
+      <div class="chart-legend">CTL = Langzeitfitness (42d) &nbsp;·&nbsp; ATL = Kurzzeitmüdigkeit (7d) &nbsp;·&nbsp; Form = CTL − ATL</div>
+    </div>
+
+    <!-- Form Widget -->
+    <div class="card" style="border-top:2px solid var(--green)">
+      <div class="section-label">Aktuelle Form</div>
+
+      <div style="margin-bottom:18px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">TSB · heute</div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <div class="form-big" id="tsbVal" style="color:var(--green)">–</div>
+          <div id="tsbBadge" style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);border-radius:4px;padding:3px 8px;font-size:11px;font-weight:700;color:var(--green)">–</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+        <div class="metric-pill">
+          <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">CTL Fitness</div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div class="metric-val" style="color:var(--accent)" id="ctlVal">–</div>
+          </div>
+        </div>
+        <div class="metric-pill">
+          <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">ATL Müdigkeit</div>
+          <div class="metric-val" style="color:var(--orange)" id="atlVal">–</div>
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:var(--text3);line-height:2;border-top:1px solid var(--border);padding-top:12px">
+        <div><span style="color:var(--green)">●</span> &gt;10 Frisch &nbsp; <span style="color:#eab308">●</span> 0–10 Neutral</div>
+        <div><span style="color:var(--orange)">●</span> -25–0 Müde &nbsp; <span style="color:var(--red)">●</span> &lt;-25 Überlastet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LETZTE TOUR -->
+  <div>
+    <div class="section-label">Letzte Tour — KI Coach Analyse</div>
+    <div class="card" style="border-top:2px solid var(--accent)">
+      <div style="display:grid;grid-template-columns:1fr auto;align-items:start;gap:16px;margin-bottom:20px">
+        <div>
+          <div id="lastTourName" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--text);letter-spacing:.3px;margin-bottom:4px">–</div>
+          <div id="lastTourMeta" style="font-size:12px;color:var(--text3);font-weight:500">Noch keine Tour geladen</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-primary" onclick="startAnalysis()" id="analyzeLastBtn" disabled>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            KI-Analyse
+          </button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px">
+        <div class="tour-stat" style="border-top:2px solid var(--accent)">
+          <div class="tour-stat-label">Distanz</div>
+          <div class="tour-stat-val" style="color:var(--accent)" id="lastTourKm">–</div>
+          <div class="tour-stat-unit">km</div>
+        </div>
+        <div class="tour-stat" style="border-top:2px solid var(--purple)">
+          <div class="tour-stat-label">Zeit</div>
+          <div class="tour-stat-val" style="color:var(--purple);font-size:20px" id="lastTourTime">–</div>
+          <div class="tour-stat-unit">Fahrzeit</div>
+        </div>
+        <div class="tour-stat" style="border-top:2px solid var(--cyan)">
+          <div class="tour-stat-label">Höhenmeter</div>
+          <div class="tour-stat-val" style="color:var(--cyan)" id="lastTourEle">–</div>
+          <div class="tour-stat-unit">m</div>
+        </div>
+        <div class="tour-stat" style="border-top:2px solid var(--red)">
+          <div class="tour-stat-label">Ø Puls</div>
+          <div class="tour-stat-val" style="color:var(--red)" id="lastTourHr">–</div>
+          <div class="tour-stat-unit">bpm</div>
+        </div>
+        <div class="tour-stat" style="border-top:2px solid var(--green)">
+          <div class="tour-stat-label">hrTSS</div>
+          <div class="tour-stat-val" style="color:var(--green)" id="lastTourTss">–</div>
+          <div class="tour-stat-unit">Belastung</div>
+        </div>
+      </div>
+
+      <div class="analysis-box" id="lastTourAnalysis">
+        <span style="color:var(--text3)">Klicke auf „KI-Analyse" für eine detaillierte Coaching-Analyse von Claude.
+
+Claude analysiert dann:
+  →  Was gut lief und was verbessert werden kann
+  →  Wie dein Pacing und deine Intensität war
+  →  Was du morgen trainieren solltest
+  →  Wie sich deine Fitness im Vergleich entwickelt</span>
+      </div>
+    </div>
+  </div>
+
+
+</div><!-- /dashboard -->
+
+
+<!-- ══════════════════════════════════════════
+     TOUREN
+══════════════════════════════════════════ -->
+<div id="tab-activities" style="display:none" class="fade">
+
+  <div class="filter-bar">
+    <input type="text" class="field" id="tourSearch" placeholder="🔍 Tour suchen…" oninput="filterTours()" style="max-width:200px"/>
+    <input type="number" class="field" id="filterMinKm" placeholder="Min km" oninput="filterTours()" style="max-width:90px"/>
+    <input type="number" class="field" id="filterMaxKm" placeholder="Max km" oninput="filterTours()" style="max-width:90px"/>
+    <span style="font-size:11px;color:var(--text3)" id="filterInfo"></span>
+    <span class="badge" style="background:rgba(59,130,246,.1);color:var(--accent);border:1px solid rgba(59,130,246,.2);margin-left:auto;font-size:12px;padding:4px 12px" id="totalKmBadge">– km gesamt</span>
+  </div>
+  <div class="section-label" id="actsCountLabel">Alle Touren</div>
+  <div id="all-acts"></div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     COACH CHAT
+══════════════════════════════════════════ -->
+<div id="tab-coach" style="display:none" class="fade">
+  <div class="chat-wrap">
+    <div class="chat-header">
+      <div style="display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;color:var(--text)">
+        <div style="width:28px;height:28px;border-radius:6px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px">◈</div>
+        Coach Chat
+      </div>
+      <div class="model-toggle">
+        <button id="btn-haiku" class="model-btn active" onclick="setModel('haiku')">⚡ Haiku</button>
+        <button id="btn-sonnet" class="model-btn" onclick="setModel('sonnet')">◈ Sonnet</button>
+      </div>
+    </div>
+
+    <div class="chat-msgs" id="chatMsgs">
+      <div style="display:flex;gap:10px">
+        <div style="width:30px;height:30px;border-radius:6px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px">◈</div>
+        <div style="max-width:80%;background:var(--surface2);border:1px solid var(--border2);border-radius:4px 12px 12px 12px;padding:12px 14px;font-size:13px;line-height:1.75;color:var(--text2);white-space:pre-wrap">Hallo Frank! Ich bin dein KI-Radcoach.
+
+Ich kenne deine komplette Trainingshistorie und helfe dir dabei, smarter zu trainieren – mit echten Metriken (CTL, ATL, hrTSS) statt Bauchgefühl.
+
+Frag mich etwas oder probiere die Quick-Questions unten aus!</div>
+      </div>
+    </div>
+
+    <div class="quick-row">
+      <button class="quick-btn" onclick="sendQuick(this)">Wie war meine letzte Tour?</button>
+      <button class="quick-btn" onclick="sendQuick(this)">Bin ich momentan überlastet?</button>
+      <button class="quick-btn" onclick="sendQuick(this)">Wie entwickelt sich meine Fitness?</button>
+      <button class="quick-btn" onclick="sendQuick(this)">Plane mir 3 Trainingseinheiten.</button>
+      <button class="quick-btn" onclick="sendQuick(this)">Bereite mich auf 150 km vor.</button>
+    </div>
+
+    <div class="chat-footer">
+      <input class="chat-input" id="chatInput" placeholder="Frage deinen Radcoach…"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"/>
+      <button onclick="sendChat()" style="width:38px;height:38px;border-radius:8px;border:none;flex-shrink:0;background:var(--accent);color:#fff;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px rgba(59,130,246,.3)">➤</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     GESUNDHEIT
+══════════════════════════════════════════ -->
+<div id="tab-health" style="display:none" class="fade">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+    <!-- Eingabe -->
+    <div>
+      <div class="section-label">Ruhepuls eintragen · Gesundheits-App</div>
+      <div class="card" style="border-left:3px solid var(--red)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+          <div style="width:36px;height:36px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">♡</div>
+          <div>
+            <div style="font-weight:700;color:var(--text)">Ruhepuls vom Vortag</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px">Gesundheits-App → Herzfrequenz → Ruhepuls (Tagesdurchschnitt)</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div><label class="field-label">Datum</label><input type="date" class="field" id="hrDate" /></div>
+          <div><label class="field-label">Ruhepuls (bpm)</label><input type="number" class="field" id="hrValue" placeholder="z.B. 48" min="30" max="100"/></div>
+        </div>
+        <div style="margin-bottom:14px"><label class="field-label">Notiz</label><input type="text" class="field" id="hrNote" placeholder="z.B. nach Ruhetag, nach langer Tour…"/></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="saveHr()">Ruhepuls speichern</button>
+      </div>
+
+      <!-- Info Box -->
+      <div style="margin-top:16px;padding:14px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;font-size:12px;color:var(--text3);line-height:1.8">
+        <div style="font-weight:700;color:var(--text2);margin-bottom:6px">Warum Ruhepuls tracken?</div>
+        Claude bekommt deinen Ruhepuls-Verlauf bei der Tour-Analyse mit. Ein erhöhter Ruhepuls signalisiert Erschöpfung – selbst wenn deine CTL-Form gut aussieht.
+      </div>
+    </div>
+
+    <!-- Verlauf -->
+    <div>
+      <div class="section-label">Verlauf · letzte 30 Tage</div>
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px">
+          <div class="metric-pill" style="text-align:center">
+            <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Aktuell</div>
+            <div class="metric-val" style="color:var(--red)" id="hrCurrent">–</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">bpm</div>
+          </div>
+          <div class="metric-pill" style="text-align:center">
+            <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Ø 30 Tage</div>
+            <div class="metric-val" style="color:var(--accent)" id="hrAvg">–</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">bpm</div>
+          </div>
+          <div class="metric-pill" style="text-align:center">
+            <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Trend</div>
+            <div class="metric-val" style="color:var(--green)" id="hrTrend">–</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px" id="hrTrendSub">&nbsp;</div>
+          </div>
+        </div>
+        <canvas id="hrChart" height="120"></canvas>
+      </div>
+
+      <div class="section-label">Letzte Einträge</div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="hr-table">
+          <thead><tr><th>Datum</th><th>Ruhepuls</th><th>Notiz</th></tr></thead>
+          <tbody id="hrTableBody"><tr><td colspan="3" style="color:var(--text3);text-align:center;padding:20px">Wird geladen …</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     MEIN RAD
+══════════════════════════════════════════ -->
+<div id="tab-bike" style="display:none" class="fade">
+
+  <!-- Sync-Erinnerung -->
+  <div id="maintReminderBox" style="display:none;margin-bottom:16px" class="demo-bar">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span id="maintReminderText" style="flex:1"></span>
+    <button onclick="dismissReminder()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;line-height:1;padding:0 4px">×</button>
+  </div>
+
+  <!-- Aktives Rad -->
+  <div class="bike-header-card" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="font-size:42px;line-height:1">🚲</div>
+        <div>
+          <div style="font-size:10px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Aktives Bike</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;color:var(--text);letter-spacing:.3px" id="activeBikeName">–</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:3px" id="activeBikeType">Wird geladen …</div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <span class="badge" style="background:rgba(59,130,246,.1);color:var(--accent);border:1px solid rgba(59,130,246,.2)" id="activeBikeKm">– km gesamt</span>
+            <span class="badge" style="background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2);display:none" id="activeBikeLastMaint">Zuletzt gewartet</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:12px">
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Nächste Wartung</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:700;color:var(--orange)" id="nextMaintKm">–</div>
+          <div style="font-size:11px;color:var(--text3)" id="nextMaintLabel">–</div>
+        </div>
+        <button class="btn btn-ghost" onclick="openNewBikeModal()" style="font-size:12px;padding:8px 14px">
+          + Mein neues Bike
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wartung Grid -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div>
+      <div class="section-label">Wartungsintervalle</div>
+      <div class="card"><div id="maintList"></div></div>
+    </div>
+    <div>
+      <div class="section-label">Reinigung & Pflege</div>
+      <div class="card">
+        <div style="display:flex;flex-direction:column;gap:10px" id="cleanList"></div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <div class="section-label" style="margin-bottom:8px">Als erledigt markieren</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-green" onclick="markClean('wash')">✓ Gewaschen</button>
+            <button class="btn btn-green" onclick="markClean('oil')">✓ Kette geölt</button>
+            <button class="btn btn-green" onclick="markClean('tyre')">✓ Reifen geprüft</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wartungslog -->
+  <div style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="section-label">Wartungslog</div>
+      <button class="btn btn-ghost" onclick="toggleLogForm()" style="font-size:11px;padding:6px 12px">+ Eintrag</button>
+    </div>
+    <div id="logForm" style="display:none;margin-bottom:12px">
+      <div class="card" style="border-left:3px solid var(--accent)">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+          <div><label class="field-label">Datum</label><input type="date" class="field" id="logDate" /></div>
+          <div><label class="field-label">km-Stand</label><input type="number" class="field" id="logKm" placeholder="z.B. 3247"/></div>
+          <div>
+            <label class="field-label">Maßnahme</label>
+            <input type="text" class="field" id="logDesc" list="maintSuggestions" placeholder="z.B. Kette gewechselt"/>
+            <datalist id="maintSuggestions">
+              <option value="Kette gewechselt"/>
+              <option value="Kette geschmiert"/>
+              <option value="Kassette gewechselt"/>
+              <option value="Bremsbeläge gewechselt"/>
+              <option value="Reifen gewechselt"/>
+              <option value="Schlauch gewechselt"/>
+              <option value="Großer Service"/>
+              <option value="Schaltung eingestellt"/>
+              <option value="Bremsen eingestellt"/>
+              <option value="Laufräder zentriert"/>
+              <option value="Rad gewaschen"/>
+              <option value="Kette geölt"/>
+            </datalist>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="saveLog()" style="padding:8px 18px">Speichern</button>
+          <button class="btn btn-ghost" onclick="toggleLogForm()">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="hr-table">
+        <thead><tr><th>Datum</th><th>km-Stand</th><th>Maßnahme</th><th></th></tr></thead>
+        <tbody id="logTableBody"><tr><td colspan="3" style="color:var(--text3);text-align:center;padding:20px">Wird geladen …</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Archiv -->
+  <div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="section-label">Bike-Archiv</div>
+      <span style="font-size:11px;color:var(--text3)" id="archiveCount">–</span>
+    </div>
+    <div id="bikeArchive"></div>
+  </div>
+
+</div><!-- /bike -->
+
+
+<!-- ══════════════════════════════════════
+     FUEL CALCULATOR TAB
+══════════════════════════════════════ -->
+<div id="tab-fuel" style="display:none" class="fade">
+
+  <!-- Sub-nav within fuel tab -->
+  <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:36px">
+    <button class="tab-btn active" id="fuel-sub-rechner" onclick="fuelSubTab('rechner',this)" style="padding:11px 18px">◎ Rechner</button>
+    <button class="tab-btn" id="fuel-sub-bestand" onclick="fuelSubTab('bestand',this)" style="padding:11px 18px">▤ Bestand</button>
+  </div>
+
+  <!-- ── RECHNER ── -->
+  <div id="fuel-panel-rechner">
+    <p class="eyebrow">Ernährungsrechner</p>
+    <h1 style="font-family:'Space Grotesk',system-ui,sans-serif;font-size:clamp(26px,4vw,38px);font-weight:700;line-height:1.1;margin-bottom:10px">Was brauchst du<br>für deine Tour?</h1>
+    <p class="fc-page-sub">Zwei Eingaben. Sofortige Empfehlung — inkl. Packliste aus deinem Bestand.</p>
+
+    <div style="display:flex;flex-direction:column;gap:32px;margin-bottom:40px">
+      <div>
+        <span class="fc-sub-label">1 · Fahrtdauer</span>
+        <div class="duration-display" id="fcDurationDisplay">2<span> h</span></div>
+        <input type="range" id="fcDurationSlider" min="1" max="16" value="4" step="1" oninput="fcOnSlider()">
+        <div class="slider-labels"><span>30 min</span><span>8 h</span></div>
+      </div>
+      <div>
+        <span class="fc-sub-label">2 · Intensität</span>
+        <div class="intensity-grid">
+          <button class="int-btn int-active" onclick="fcSetIntensity('endurance',this)">
+            <span class="int-name">Endurance</span>
+            <span class="int-zone">Zone 2</span>
+            <span class="int-desc">Konversation problemlos möglich.</span>
+          </button>
+          <button class="int-btn" onclick="fcSetIntensity('tempo',this)">
+            <span class="int-name">Tempo</span>
+            <span class="int-zone">Sweetspot</span>
+            <span class="int-desc">Kurze Sätze möglich.</span>
+          </button>
+          <button class="int-btn" onclick="fcSetIntensity('race',this)">
+            <span class="int-name">Race</span>
+            <span class="int-zone">Intervall / Wettkampf</span>
+            <span class="int-desc">Kaum sprechen möglich.</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc-divider"></div>
+    <span class="fc-sub-label">Dein Bedarf</span>
+    <div class="fuel-results-grid">
+      <div class="fuel-result-card" style="--fc:#111111">
+        <div class="fuel-result-label">Kohlenhydrate</div>
+        <div class="fuel-result-value" id="fcCarbsVal">–<span class="unit">g</span></div>
+        <div class="fuel-result-sub" id="fcCarbsRate">–</div>
+      </div>
+      <div class="fuel-result-card" style="--fc:#1d4ed8">
+        <div class="fuel-result-label">Flüssigkeit</div>
+        <div class="fuel-result-value" id="fcHydrationVal">–<span class="unit">L</span></div>
+        <div class="fuel-result-sub" id="fcHydrationBottles">–</div>
+      </div>
+    </div>
+    <div class="fuel-timing-grid">
+      <div class="fuel-timing-card">
+        <div class="fuel-timing-label">Essen</div>
+        <div class="fuel-timing-value" id="fcEatTiming">–</div>
+      </div>
+      <div class="fuel-timing-card">
+        <div class="fuel-timing-label">Trinken</div>
+        <div class="fuel-timing-value">Alle 10–20 Min.</div>
+      </div>
+    </div>
+    <div class="fuel-hint" id="fcHintBox">–</div>
+
+    <div class="pack-section">
+      <div class="pack-header">
+        <span class="fc-sub-label" style="margin-bottom:0">Packliste aus deinem Bestand</span>
+        <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="fuelSubTab('bestand',document.getElementById('fuel-sub-bestand'))">Bestand verwalten →</button>
+      </div>
+      <div id="fcPackList"></div>
+      <div class="pack-summary" id="fcPackSummary" style="display:none"></div>
+      <div id="fcConfirmWrap" style="display:none;margin-top:16px;text-align:right">
+        <button class="btn btn-primary" onclick="fcConfirmPack()" style="font-size:13px;padding:10px 22px;letter-spacing:.03em">Let's roll</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BESTAND ── -->
+  <div id="fuel-panel-bestand" style="display:none">
+    <p class="eyebrow">Lager</p>
+    <h1 style="font-family:'Space Grotesk',system-ui,sans-serif;font-size:clamp(26px,4vw,38px);font-weight:700;line-height:1.1;margin-bottom:10px">Dein Bestand</h1>
+    <p class="fc-page-sub">Hinterlege deine Produkte mit Kohlenhydratgehalt pro Portion und deiner aktuellen Stückzahl.</p>
+
+    <span class="fc-sub-label">Produkte</span>
+    <div class="stock-list-fc" id="fcStockList"></div>
+    <div id="fcStockEmpty" style="display:none;font-size:13px;color:var(--text3);padding:14px 0">Noch keine Produkte angelegt. Füge unten dein erstes Produkt hinzu.</div>
+
+    <div class="fc-divider"></div>
+    <span class="fc-sub-label">Produkt hinzufügen</span>
+    <div class="add-form-fc">
+      <div class="add-form-fc-grid">
+        <div class="span2">
+          <label class="field-label">Name</label>
+          <input class="field" id="fcNewName" placeholder="z.B. SIS Beta Fuel Gel" />
+        </div>
+        <div>
+          <label class="field-label">Kategorie</label>
+          <select class="field" id="fcNewCat">
+            <option value="gel">Gel</option>
+            <option value="mus">Fruchtmus / Riegel</option>
+            <option value="drink">Getränkepulver</option>
+            <option value="other">Sonstiges</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">KH pro Portion (g)</label>
+          <input class="field" id="fcNewCarbs" type="number" min="1" max="200" placeholder="30" />
+        </div>
+        <div>
+          <label class="field-label">Bestand (Stück)</label>
+          <input class="field" id="fcNewQty" type="number" min="0" max="999" placeholder="12" />
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-primary" style="width:100%;justify-content:center;border-radius:999px" onclick="fcAddProduct()">Hinzufügen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-fuel -->
+
+<!-- ══════════════════════════════════════════
+     EINSTELLUNGEN: COACH- UND LEISTUNGSPROFIL
+══════════════════════════════════════════ -->
+<div id="tab-settings" style="display:none" class="fade">
+  <div style="margin-bottom:22px">
+    <div class="section-label">Deine persönliche Coaching-Basis</div>
+    <h1 style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:700;line-height:1.05;margin-bottom:8px">Coach- & Leistungsprofil</h1>
+    <p style="font-size:13px;color:var(--text3);line-height:1.7;max-width:720px">Diese Angaben werden pro Benutzer gespeichert und bei Chat, Tourenanalyse und Trainingsplanung an Claude übergeben. Fehlende Werte bleiben unberücksichtigt.</p>
+  </div>
+
+  <div class="settings-grid">
+    <div>
+      <div class="section-label">Wie soll dein Coach arbeiten?</div>
+      <div class="card" style="border-top:2px solid var(--purple)">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label class="field-label">Bevorzugte Sprache</label>
+            <select class="field" id="coachLanguage">
+              <option>Deutsch</option><option>English</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="coachStyle">Antwortstil und Coach-Vorgaben</label>
+            <textarea class="field" id="coachStyle" rows="4" style="resize:vertical" placeholder="z.B. Locker und persönlich. Erkläre mir die Daten verständlich, ordne meine Leistung realistisch ein, motiviere mich, aber übertreibe nicht und benenne Unsicherheiten ehrlich."></textarea>
+            <div style="font-size:11px;color:var(--text3);line-height:1.6;margin-top:5px">Freitext: Beschreibe hier, wie dein Coach mit dir sprechen und Leistungen einordnen soll.</div>
+          </div>
+          <div>
+            <label class="field-label">Trainingsfokus</label>
+            <input class="field" id="coachFocus" placeholder="z.B. Grundlagenausdauer, lange Anstiege, Tempo" />
+          </div>
+          <div>
+            <label class="field-label">Bevorzugte Trainingseinheiten</label>
+            <input class="field" id="coachSessions" placeholder="z.B. lange Ausfahrt, Intervalle, lockere Fahrt" />
+          </div>
+          <div>
+            <label class="field-label">Verfügbare Trainingstage</label>
+            <input class="field" id="coachDays" placeholder="z.B. Dienstag, Donnerstag, Samstag" />
+          </div>
+          <div>
+            <label class="field-label">Maximale Trainingszeit pro Woche (Stunden)</label>
+            <input class="field" id="coachMaxHours" type="number" min="0" max="40" step="0.5" placeholder="z.B. 8" />
+          </div>
+          <div>
+            <label class="field-label">Weitere Hinweise</label>
+            <textarea class="field" id="coachNotes" rows="4" style="resize:vertical" placeholder="z.B. Arbeitszeiten, bevorzugte Strecken, Verletzungen oder Einschränkungen"></textarea>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:4px">
+            <span id="coachProfileUpdated" style="font-size:11px;color:var(--text3)"></span>
+            <button class="btn btn-primary" onclick="saveCoachProfile()">Coach-Profil speichern</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Welche Werte soll der Coach verwenden?</div>
+      <div class="card" style="border-top:2px solid var(--red)">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label class="field-label">HFmax (bpm)</label>
+            <input class="field" id="perfMaxHr" type="number" min="120" max="240" placeholder="z.B. 185" />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label class="field-label">LTHR (bpm)</label>
+              <input class="field" id="perfLthr" type="number" min="80" max="220" placeholder="z.B. 165" />
+            </div>
+            <div>
+              <label class="field-label">LTHR-Methode</label>
+              <select class="field" id="perfLthrMethod">
+                <option value="">Nicht angegeben</option><option>20-Minuten-Test</option><option>30-Minuten-Test</option><option>Feldtest</option><option>Erfahrung / Schätzung</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label class="field-label">LTHR-Testdatum</label>
+              <input class="field" id="perfLthrDate" type="date" />
+            </div>
+            <div>
+              <label class="field-label">Vertrauensgrad</label>
+              <select class="field" id="perfLthrTrust">
+                <option value="">Nicht angegeben</option><option value="hoch">Hoch</option><option value="mittel">Mittel</option><option value="niedrig">Niedrig</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="field-label">Zonenmodell</label>
+            <select class="field" id="perfZoneModel">
+              <option value="lthr">LTHR-basiert</option><option value="max_hr">HFmax-basiert</option>
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label class="field-label">Körpergewicht (kg, optional)</label>
+              <input class="field" id="perfWeight" type="number" min="30" max="250" step="0.1" placeholder="z.B. 82.5" />
+            </div>
+            <div>
+              <label class="field-label">FTP (W, optional)</label>
+              <input class="field" id="perfFtp" type="number" min="50" max="600" placeholder="z.B. 240" />
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--text3);line-height:1.7;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:4px">Der Ruhepuls wird automatisch aus dem Tab „Gesundheit“ übernommen. Bitte pflege ihn nur dort. Die übrigen Werte sind persönliche Referenzen für Training und Analyse und ersetzen keine medizinische Beratung. FTP wird nur verwendet, wenn du einen Leistungsmesser und einen verlässlichen Wert hinterlegt hast.</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:4px">
+            <span id="performanceProfileUpdated" style="font-size:11px;color:var(--text3)"></span>
+            <button class="btn btn-primary" onclick="savePerformanceProfile()">Leistungsprofil speichern</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /tab-settings -->
+
+</main>
+
+<div id="toastEl" style="display:none" class="toast-msg"></div>
+
+<!-- ══════ MODAL: Neues Bike ══════ -->
+<div id="newBikeModal" style="display:none" class="modal-bg" onclick="if(event.target===this)closeNewBikeModal()">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--text);letter-spacing:.3px">Neues Bike aktivieren</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px">Das aktuelle Rad wird ins Archiv verschoben</div>
+      </div>
+      <button onclick="closeNewBikeModal()" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--text3);line-height:1">×</button>
+    </div>
+
+    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;margin-bottom:18px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:20px">📦</span>
+      <div style="font-size:13px;color:var(--text3)">
+        <span style="font-weight:700;color:var(--text2)" id="modalOldBike">KTM Revelator 10</span> wird archiviert<br>
+        <span style="font-size:11px">Alle Touren, Logs & km bleiben gespeichert.</span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:22px">
+      <div><label class="field-label">Rad-Name *</label><input type="text" class="field" id="newBikeName" placeholder="z.B. Canyon Endurace CF 7"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label class="field-label">Typ</label>
+          <select class="field" id="newBikeType">
+            <option>Rennrad</option><option>Gravel</option><option>MTB</option><option>E-Bike</option><option>Cyclocross</option>
+          </select>
+        </div>
+        <div><label class="field-label">Kaufjahr</label><input type="number" class="field" id="newBikeYear" placeholder="2026" value="2026" min="2000" max="2030"/></div>
+      </div>
+      <div><label class="field-label">Start-km (falls nicht bei 0)</label><input type="number" class="field" id="newBikeStartKm" placeholder="0" value="0"/></div>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" onclick="activateNewBike()" style="flex:1;justify-content:center;padding:11px;font-size:13px">Neues Bike aktivieren</button>
+      <button class="btn btn-ghost" onclick="closeNewBikeModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── API / Config ───────────────────────────
+const WORKER_URL='https://radcoach-worker.bmx282.workers.dev';
+let sessionToken=sessionStorage.getItem('radcoach_session')||null;
+let currentUser=null;
+const api=async(path,opts={})=>{
+  const headers={'Content-Type':'application/json',...(opts.headers||{})};
+  if(sessionToken) headers.Authorization='Bearer '+sessionToken;
+  const r=await fetch(WORKER_URL+path,{...opts,headers});
+  let d={}; try{d=await r.json()}catch(e){}
+  if(r.status===401 && path!=='/auth/login'){
+    sessionToken=null; currentUser=null; sessionStorage.removeItem('radcoach_session');
+    document.body.classList.remove('is-authenticated');
+    showLoginError('Deine Sitzung ist abgelaufen. Bitte erneut anmelden.');
+  }
+  if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
+  return d;
+};
+const $=id=>document.getElementById(id);
+let connected=false, chatHistory=[], activities=[], maintLog=[], activeBikeData=null, archivedBikesData=[];
+
+
+// ── Login / Benutzer ───────────────────────
+function showLoginError(message){
+  const el=$('loginError'); if(!el) return;
+  el.textContent=message||''; el.style.display=message?'block':'none';
+}
+function showLogin(){
+  document.body.classList.remove('is-authenticated');
+  const p=$('loginPassword'); if(p) p.value='';
+  setTimeout(()=>$('loginEmail')?.focus(),50);
+}
+function setAuthenticated(user){
+  currentUser=user||null;
+  document.body.classList.add('is-authenticated');
+  showLoginError('');
+  const adminBtn=$('adminUserBtn');
+  if(adminBtn) adminBtn.style.display=currentUser?.role==='admin'?'inline-flex':'none';
+}
+async function loginUser(){
+  const email=$('loginEmail')?.value.trim();
+  const password=$('loginPassword')?.value||'';
+  const btn=$('loginBtn');
+  if(!email||!password){showLoginError('Bitte E-Mail und Passwort eingeben.');return;}
+  if(btn){btn.disabled=true;btn.textContent='Anmeldung…';}
+  try{
+    const d=await api('/auth/login',{method:'POST',body:JSON.stringify({email,password})});
+    sessionToken=d.token; currentUser=d.user; sessionStorage.setItem('radcoach_session',sessionToken);
+    setAuthenticated(currentUser);
+    await checkStatus();
+  }catch(e){showLoginError(e.message||'Anmeldung fehlgeschlagen.');}
+  finally{if(btn){btn.disabled=false;btn.textContent='Anmelden';}}
+}
+async function logoutUser(){
+  try{if(sessionToken) await api('/auth/logout',{method:'POST'});}catch(e){}
+  sessionToken=null; currentUser=null; sessionStorage.removeItem('radcoach_session');
+  chatHistory=[]; showLogin();
+}
+async function createAdditionalUser(){
+  if(currentUser?.role!=='admin') return;
+  const email=prompt('E-Mail des neuen Nutzers:'); if(!email) return;
+  const name=prompt('Name des neuen Nutzers:',email); if(name===null) return;
+  const password=prompt('Temporäres Passwort (mindestens 12 Zeichen):'); if(!password) return;
+  try{
+    await api('/auth/users',{method:'POST',body:JSON.stringify({email,name,password})});
+    showToast('Nutzer angelegt. Zugangsdaten sicher übergeben.');
+  }catch(e){showToast(e.message,'error');}
+}
+async function initAuth(){
+  showLogin();
+  if(!sessionToken) return;
+  try{
+    const d=await api('/auth/me');
+    setAuthenticated(d.user);
+    await checkStatus();
+  }catch(e){showLogin();}
+}
+
+function dateToday(){return new Date().toISOString().slice(0,10)}
+function fmtDate(iso){ if(!iso) return '–'; const p=String(iso).slice(0,10).split('-'); return p.length===3?`${p[2]}.${p[1]}.${p[0]}`:iso }
+function formatTime(s){s=Number(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h}h ${m}m`:`${m}m`}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+// ── Markdown-Renderer für Claude-Antworten (Analyse & Chat) ──
+function inlineMd(s){
+  s=esc(s)
+  s=s.replace(/\*\*(.+?)\*\*/g,'<strong style="color:var(--text);font-weight:700">$1</strong>')
+  s=s.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g,'$1<em>$2</em>')
+  return s
+}
+function renderMarkdown(md){
+  if(!md) return ''
+  const lines=String(md).split(/\r?\n/)
+  let html='', inList=false, listType=null, para=[]
+  const flushPara=()=>{ if(para.length){ html+=`<p style="margin:0 0 10px 0">${inlineMd(para.join(' '))}</p>`; para=[] } }
+  const closeList=()=>{ if(inList){ html+= listType==='ol'?'</ol>':'</ul>'; inList=false; listType=null } }
+  for(const raw of lines){
+    const line=raw.trim()
+    if(!line){ flushPara(); closeList(); continue }
+    let m
+    if((m=line.match(/^###\s+(.*)/))){ flushPara();closeList(); html+=`<h4 style="margin:14px 0 6px;color:var(--text);font-size:13px;font-weight:700">${inlineMd(m[1])}</h4>`; continue }
+    if((m=line.match(/^##\s+(.*)/))){ flushPara();closeList(); html+=`<h3 style="margin:16px 0 8px;color:var(--text);font-size:14.5px;font-weight:700">${inlineMd(m[1])}</h3>`; continue }
+    if((m=line.match(/^#\s+(.*)/))){ flushPara();closeList(); html+=`<h2 style="margin:16px 0 8px;color:var(--text);font-size:16px;font-weight:700">${inlineMd(m[1])}</h2>`; continue }
+    if((m=line.match(/^[-*→]\s+(.*)/))){
+      flushPara()
+      if(!inList||listType!=='ul'){ closeList(); html+='<ul style="margin:4px 0 10px;padding-left:20px">'; inList=true; listType='ul' }
+      html+=`<li style="margin-bottom:4px">${inlineMd(m[1])}</li>`; continue
+    }
+    if((m=line.match(/^\d+\.\s+(.*)/))){
+      flushPara()
+      if(!inList||listType!=='ol'){ closeList(); html+='<ol style="margin:4px 0 10px;padding-left:20px">'; inList=true; listType='ol' }
+      html+=`<li style="margin-bottom:4px">${inlineMd(m[1])}</li>`; continue
+    }
+    closeList(); para.push(line)
+  }
+  flushPara(); closeList()
+  return html
+}
+
+// ── Fixed maintenance / cleaning intervals (client-side, based on real bike km) ──
+const MAINT_DEF=[
+  {key:'Kette', interval:1500, color:'#f97316', match:['kette','chain']},
+  {key:'Kassette', interval:5000, color:'#ef4444', match:['kassette','ritzel','cassette']},
+  {key:'Bremsbeläge', interval:3000, color:'#a855f7', match:['brems','bremsbel']},
+  {key:'Reifen', interval:5000, color:'#06b6d4', match:['reifen','tire','tyre']},
+  {key:'Großer Service', interval:10000, color:'#22c55e', match:['service','inspektion']},
+];
+const CLEAN_DEF=[
+  {key:'wash', label:'Rad gewaschen', warnDays:7},
+  {key:'oil', label:'Kette geölt', warnDays:5},
+  {key:'tyre', label:'Reifen geprüft', warnDays:14},
+];
+function daysBetween(a,b){const A=new Date(a),B=new Date(b);return Math.round((B-A)/86400000)}
+
+/** Findet den letzten Wartungslog-Eintrag mit km-Angabe, der zu diesem Intervall passt
+ *  (z.B. "Kette gewechselt" für das Kette-Intervall) – das ist die neue Basislinie. */
+function findMaintBaseline(m){
+  const matches=maintLog.filter(x=>x.km_at_time!=null && m.match.some(kw=>(x.description||'').toLowerCase().includes(kw)))
+  if(!matches.length) return null
+  return matches.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0]
+}
+
+// ── Weekly Stats / Heatmap ─────────────────
+
+// ── Ziel ───────────────────────────────────
+function goalDateDE(value){
+  if(!value) return null;
+  const p=String(value).slice(0,10).split('-');
+  return p.length===3?`${p[2]}.${p[1]}.${p[0]}`:String(value);
+}
+function renderActiveGoal(goal){
+  const card=$('activeGoalCard'); if(!card) return;
+  if(!goal){ card.classList.remove('visible'); return; }
+  card.classList.add('visible');
+  $('activeGoalTitle').textContent=goal.title||goal.goal||'Trainingsziel';
+  const chips=[];
+  if(goal.event_date) chips.push(`Datum: ${goalDateDE(goal.event_date)}`);
+  if(goal.distance_km!=null) chips.push(`${goal.distance_km} km`);
+  if(goal.elevation_m!=null) chips.push(`${Number(goal.elevation_m).toLocaleString('de-DE')} hm`);
+  if(goal.target_time_min!=null) chips.push(`Zielzeit: ${Math.floor(goal.target_time_min/60)} h ${String(goal.target_time_min%60).padStart(2,'0')} min`);
+  $('activeGoalMeta').innerHTML=chips.map(x=>`<span class="goal-chip">${esc(x)}</span>`).join('');
+  $('activeGoalDescription').textContent=goal.description||'';
+}
+async function loadGoal(){
+  try{
+    const d=await api('/goal');
+    renderActiveGoal(d.goal||null);
+    if($('goalDisplay')) $('goalDisplay').textContent=d.goal?.description||d.goal?.goal||'Noch kein aktives Ziel';
+    if($('goalInput')) $('goalInput').value=d.goal?.description||d.goal?.goal||'';
+  }catch(e){ /* silent */ }
+}
+async function loadGoalDraft(){
+  try{
+    const d=await api('/goal/draft');
+    if(d.draft) showToast('Ein Zielentwurf wartet im Coach-Chat auf deine Bestaetigung.');
+  }catch(e){ /* silent */ }
+}
+
+function setProfileValue(id, value){
+  const el=$(id); if(el) el.value=value ?? '';
+}
+function showProfileUpdated(id, value){
+  const el=$(id); if(el) el.textContent=value ? `Zuletzt gespeichert: ${fmtDateTime(value)}` : '';
+}
+function fmtDateTime(value){
+  const d=new Date(String(value).replace(' ','T')+'Z');
+  return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'});
+}
+async function loadProfiles(){
+  try{
+    const [coachData, performanceData]=await Promise.all([api('/profile/coach'),api('/profile/performance')]);
+    const c=coachData.profile||{};
+    setProfileValue('coachLanguage',c.language||'Deutsch');
+    setProfileValue('coachStyle',c.style||'Locker und persönlich. Erkläre mir die Daten verständlich, ordne meine Leistung realistisch ein, motiviere mich, aber übertreibe nicht und benenne Unsicherheiten ehrlich.');
+    setProfileValue('coachFocus',c.training_focus);
+    setProfileValue('coachSessions',c.preferred_sessions);
+    setProfileValue('coachDays',c.days);
+    setProfileValue('coachMaxHours',c.max_hours);
+    setProfileValue('coachNotes',c.notes);
+    showProfileUpdated('coachProfileUpdated',c.updated_at);
+
+    const p=performanceData.profile||{};
+    setProfileValue('perfMaxHr',p.max_hr);
+    setProfileValue('perfLthr',p.lthr);
+    setProfileValue('perfLthrMethod',p.lthr_method);
+    setProfileValue('perfLthrDate',p.lthr_date);
+    setProfileValue('perfLthrTrust',p.lthr_trust);
+    setProfileValue('perfZoneModel',p.zone_model||'lthr');
+    setProfileValue('perfWeight',p.weight_kg);
+    setProfileValue('perfFtp',p.ftp);
+    showProfileUpdated('performanceProfileUpdated',p.updated_at);
+  }catch(e){ if(connected) showToast('Profile konnten nicht geladen werden: '+e.message,'error'); }
+}
+async function saveCoachProfile(){
+  const btn=document.querySelector('#tab-settings button[onclick="saveCoachProfile()"]');
+  if(btn){btn.disabled=true;btn.textContent='Wird gespeichert…';}
+  try{
+    const d=await api('/profile/coach',{method:'PUT',body:JSON.stringify({
+      language:$('coachLanguage')?.value,
+      style:$('coachStyle')?.value,
+      training_focus:$('coachFocus')?.value,
+      preferred_sessions:$('coachSessions')?.value,
+      days:$('coachDays')?.value,
+      max_hours:$('coachMaxHours')?.value,
+      notes:$('coachNotes')?.value
+    })});
+    const p=d.profile||{}; showProfileUpdated('coachProfileUpdated',p.updated_at); showToast('Coach-Profil gespeichert');
+  }catch(e){showToast(e.message,'error')}
+  finally{if(btn){btn.disabled=false;btn.textContent='Coach-Profil speichern';}}
+}
+async function savePerformanceProfile(){
+  const btn=document.querySelector('#tab-settings button[onclick="savePerformanceProfile()"]');
+  if(btn){btn.disabled=true;btn.textContent='Wird gespeichert…';}
+  try{
+    const d=await api('/profile/performance',{method:'PUT',body:JSON.stringify({
+      max_hr:$('perfMaxHr')?.value,
+      lthr:$('perfLthr')?.value,
+      lthr_method:$('perfLthrMethod')?.value,
+      lthr_date:$('perfLthrDate')?.value,
+      lthr_trust:$('perfLthrTrust')?.value,
+      zone_model:$('perfZoneModel')?.value,
+      weight_kg:$('perfWeight')?.value,
+      ftp:$('perfFtp')?.value
+    })});
+    const p=d.profile||{}; showProfileUpdated('performanceProfileUpdated',p.updated_at); showToast('Leistungsprofil gespeichert');
+  }catch(e){showToast(e.message,'error')}
+  finally{if(btn){btn.disabled=false;btn.textContent='Leistungsprofil speichern';}}
+}
+async function saveGoal(){
+  const val=$('goalInput')?.value?.trim(); if(!val){showToast('Bitte Ziel eingeben','error');return;}
+  try{
+    await api('/goal',{method:'POST',body:JSON.stringify({goal:val})});
+    showToast('Ziel als Entwurf angelegt. Bitte im Coach-Chat mit Ja bestaetigen.');
+    switchTab('coach',document.querySelectorAll('.tab-btn')[2]);
+  }catch(e){ showToast(e.message,'error') }
+}
+
+// ── Sync-Erinnerung ────────────────────────
+function dismissReminder(){
+  const el=$('maintReminderBox'); if(el) el.style.display='none';
+}
+
+// ── Tab switching ──────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll('[id^="tab-"]').forEach(el=>el.style.display='none')
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'))
+  document.getElementById('tab-'+id).style.display=''
+  btn.classList.add('active')
+  if(id==='dashboard') setTimeout(()=>{drawLoadChart();},50)
+  if(id==='health') setTimeout(()=>{drawHrChart();},50)
+  if(id==='bike') setTimeout(()=>{loadBike();},50)
+  if(id==='settings') setTimeout(()=>{loadProfiles();},50)
+}
+
+// ── Connection / Sync ──────────────────────
+function fmtSyncTime(iso){
+  if(!iso) return '';
+  const d=new Date(iso), now=new Date();
+  const diff=Math.floor((now-d)/60000);
+  if(diff<1) return 'gerade eben';
+  if(diff<60) return `vor ${diff} Min.`;
+  if(diff<1440) return `vor ${Math.floor(diff/60)} Std.`;
+  return `${d.getDate()}.${d.getMonth()+1}. ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function setStatus(ok,text,lastSync){
+  connected=ok;
+  $('connDot').style.background=ok?'var(--green)':'var(--orange)';
+  $('connDot').style.animation=ok?'blink 2s infinite':'none';
+  $('connText').textContent=text;
+  $('syncBtnLabel').textContent=ok?'Strava Sync':'Mit Strava verbinden';
+  $('notice').style.display=ok?'none':'flex';
+  if(!ok) $('noticeText').textContent='Noch keine Verbindung zu Strava. Verbinde dein Konto, um echte Touren zu laden.';
+  const ls=$('lastSyncText');
+  if(ls) ls.textContent=lastSync?`Sync: ${fmtSyncTime(lastSync)}`:'';
+}
+function connectOrSync(){ connected ? doSync() : connect() }
+async function connect(){ try{ const d=await api('/auth/url'); location.href=d.url }catch(e){ showToast(e.message,'error') } }
+
+async function checkStatus(){
+  try{
+    const d=await api('/auth/status');
+    setStatus(!!d.connected, d.connected?'Strava verbunden':'Strava nicht verbunden', d.last_sync);
+    if(d.connected){
+      await Promise.all([loadDashboard(), loadActivities(), loadHr(), loadBike(), loadGoal(), loadProfiles()]);
+    } else {
+      await Promise.all([loadActivities(), loadGoal()]);
+    }
+  }catch(e){
+    setStatus(false,'Worker nicht erreichbar');
+    showToast('Worker nicht erreichbar – bitte Seite neu laden.','error');
+  }
+}
+
+async function doSync(){
+  if(!connected){ connect(); return }
+  const btn=$('syncBtn'); btn.disabled=true; $('syncBtnLabel').innerHTML='<span class="spin">↻</span> Sync…';
+  try{
+    const d=await api('/sync',{method:'POST'});
+    showToast(d.message||'Sync abgeschlossen');
+    const ls=$('lastSyncText'); if(ls&&d.last_sync) ls.textContent=`Sync: ${fmtSyncTime(d.last_sync)}`;
+    // Wartungs-Erinnerung anzeigen
+    if(d.maintReminder){
+      const rb=$('maintReminderBox'), rt=$('maintReminderText');
+      if(rb&&rt){ rt.textContent=d.maintReminder; rb.style.display='flex'; }
+    }
+    await Promise.all([loadDashboard(), loadActivities(), loadBike()]);
+  }catch(e){ showToast(e.message,'error') }
+  finally{ btn.disabled=false; $('syncBtnLabel').textContent='Strava Sync' }
+}
+
+// ── Dashboard ──────────────────────────────
+let chartData=[]; // populated from /activities
+const CHART_COLORS = {ctl:'#3b82f6',atl:'#f97316',tsb:'#22c55e',km:'#a855f7'}
+let chartVisible = {ctl:true,atl:true,tsb:true,km:false}
+
+function toggleChart(key,btn) {
+  chartVisible[key] = !chartVisible[key]
+  btn.classList.toggle('on', chartVisible[key])
+  drawLoadChart()
+}
+
+async function loadDashboard(){
+  try{
+    const d=await api('/dashboard');
+    const s=d.stats30||{};
+    $('statKm').textContent=(s.total_km??0);
+    $('statKmSub').textContent=`Ø ${s.count?Math.round((s.total_km||0)/s.count):0} km pro Tour · ${s.count??0} Touren`;
+    $('statTime').textContent=formatTime(s.total_time_s);
+    $('statTimeSub').textContent=s.count?`Ø ${formatTime((s.total_time_s||0)/s.count)} pro Tour`:'Echte Aktivitäten';
+    $('statElev').textContent=(s.total_elev??0).toLocaleString('de-DE');
+    $('statHr').textContent=s.avg_hr?Math.round(s.avg_hr):'–';
+
+    const f=d.form||{};
+    const ctl=Number(f.ctl||0), atl=Number(f.atl||0), tsb=Number(f.tsb||0);
+    renderActiveGoal(d.goal||null);
+    $('ctlVal').textContent=ctl.toFixed(1);
+    $('atlVal').textContent=atl.toFixed(1);
+    $('tsbVal').textContent=(tsb>=0?'+':'')+tsb.toFixed(1);
+    let label='NEUTRAL', color='#eab308', bg='rgba(234,179,8,.12)', border='rgba(234,179,8,.25)';
+    if(tsb>10){label='FRISCH';color='var(--green)';bg='rgba(34,197,94,.12)';border='rgba(34,197,94,.25)'}
+    else if(tsb<-25){label='ÜBERLASTET';color='var(--red)';bg='rgba(239,68,68,.12)';border='rgba(239,68,68,.25)'}
+    else if(tsb<0){label='MÜDE';color='var(--orange)';bg='rgba(249,115,22,.12)';border='rgba(249,115,22,.25)'}
+    $('tsbVal').style.color=color;
+    $('tsbBadge').textContent=label;
+    $('tsbBadge').style.color=color; $('tsbBadge').style.background=bg; $('tsbBadge').style.borderColor=border;
+
+    const t=d.lastTour;
+    if(t){
+      $('lastTourName').textContent=t.name||'Tour';
+      $('lastTourMeta').textContent=`${fmtDate(t.date)}`;
+      $('lastTourKm').textContent=t.distance_km??'–';
+      $('lastTourTime').textContent=t.moving_time_s?formatTime(t.moving_time_s):'–';
+      $('lastTourEle').textContent=t.elevation_m??'–';
+      $('lastTourHr').textContent=t.avg_hr??'–';
+      $('lastTourTss').textContent=t.hr_tss??t.hrtss??t.tss??'–';
+      const btn=$('analyzeLastBtn'); btn.disabled=false;
+      btn.onclick=()=>startAnalysis(t.strava_id);
+    }
+  }catch(e){ showToast(e.message,'error') }
+}
+
+async function drawLoadChart() {
+  const canvas=document.getElementById('loadChart'); if(!canvas) return
+  const cont=document.getElementById('chartContainer'); if(!cont) return
+  try{
+    const d=await api('/form/history?days=90');
+    chartData=(d.history||[]).map(x=>({ctl:x.ctl||0,atl:x.atl||0,tsb:x.tsb||0,km:x.km||null,date:x.date,tss:x.tss||0}));
+  }catch(e){ /* leave chartData as-is */ }
+
+  const W=cont.clientWidth||700, H=cont.clientHeight||240
+  canvas.width=W; canvas.height=H
+  const ctx=canvas.getContext('2d')
+  const p={l:38,r:16,t:10,b:28}
+  const cW=W-p.l-p.r, cH=H-p.t-p.b
+
+  if(!chartData.length){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#9ca3af';ctx.font='13px Inter,sans-serif'
+    ctx.fillText('Noch keine Verlaufsdaten vorhanden',W/2-100,H/2); return
+  }
+
+  const lines=['ctl','atl','tsb'].filter(k=>chartVisible[k])
+  const bars=['km'].filter(k=>chartVisible[k])
+  const lv=lines.flatMap(k=>chartData.map(d=>d[k]).filter(v=>v!=null))
+  const bv=bars.flatMap(k=>chartData.map(d=>d[k]).filter(v=>v!=null))
+  ctx.clearRect(0,0,W,H)
+  if(!lines.length&&!bars.length){
+    ctx.fillStyle='#9ca3af';ctx.font='13px Inter,sans-serif'
+    ctx.fillText('Keine Datenreihe aktiv',W/2-80,H/2); return
+  }
+
+  const minL=lv.length?Math.floor(Math.min(...lv)-5):0
+  const maxL=lv.length?Math.ceil(Math.max(...lv)+5):100
+  const maxB=bv.length?Math.ceil(Math.max(...bv)*1.25):100
+
+  const xP=i=>p.l+(i/Math.max(chartData.length-1,1))*cW
+  const yL=v=>p.t+cH-((v-minL)/(maxL-minL||1))*cH
+  const yB=v=>p.t+cH-(v/(maxB||1))*cH
+
+  ctx.strokeStyle='#dde2ef'; ctx.lineWidth=1
+  for(let s=0;s<=5;s++){
+    const v=minL+((maxL-minL)/5)*s, y=yL(v)
+    ctx.beginPath(); ctx.moveTo(p.l,y); ctx.lineTo(p.l+cW,y); ctx.stroke()
+    if(lv.length){ctx.fillStyle='#6b7280';ctx.font='10px Inter,sans-serif';ctx.fillText(Math.round(v),2,y+3)}
+  }
+  if(lv.length&&minL<0&&maxL>0){
+    ctx.strokeStyle='#c8d0e4';ctx.setLineDash([4,3])
+    ctx.beginPath();ctx.moveTo(p.l,yL(0));ctx.lineTo(p.l+cW,yL(0));ctx.stroke()
+    ctx.setLineDash([])
+  }
+
+  const bw=Math.max(2,cW/chartData.length*.5)
+  bars.forEach(k=>{
+    chartData.forEach((d,i)=>{
+      if(!d[k]) return
+      const x=xP(i)-bw/2, yt=yB(d[k]), h=Math.max(1,(p.t+cH)-yt)
+      ctx.fillStyle=CHART_COLORS[k]+'40'
+      ctx.fillRect(x,yt,bw,h)
+    })
+  })
+
+  const dash={tsb:[6,3]}
+  lines.forEach(k=>{
+    if(k==='ctl'&&chartVisible.ctl){
+      const gr=ctx.createLinearGradient(0,p.t,0,p.t+cH)
+      gr.addColorStop(0,CHART_COLORS.ctl+'25'); gr.addColorStop(1,CHART_COLORS.ctl+'03')
+      ctx.fillStyle=gr; ctx.beginPath()
+      let s2=false
+      chartData.forEach((d,i)=>{
+        const v=d[k]; if(!v&&v!==0)return
+        const x=xP(i),y=yL(v)
+        if(!s2){ctx.moveTo(x,p.t+cH);ctx.lineTo(x,y);s2=true}else ctx.lineTo(x,y)
+      })
+      ctx.lineTo(xP(chartData.length-1),p.t+cH); ctx.closePath(); ctx.fill()
+    }
+    ctx.strokeStyle=CHART_COLORS[k]; ctx.lineWidth=2; ctx.setLineDash(dash[k]||[])
+    ctx.lineJoin='round'; ctx.lineCap='round'; ctx.beginPath()
+    let first=true
+    chartData.forEach((d,i)=>{
+      const v=d[k]; if(v==null){first=true;return}
+      first?(ctx.moveTo(xP(i),yL(v)),first=false):ctx.lineTo(xP(i),yL(v))
+    })
+    ctx.stroke(); ctx.setLineDash([])
+  })
+
+  ctx.fillStyle='#6b7280'; ctx.font='10px Inter,sans-serif'
+  const step=Math.max(1,Math.floor(chartData.length/7))
+  chartData.forEach((_,i)=>{
+    if(i%step&&i!==chartData.length-1) return
+    const d=new Date(); d.setDate(d.getDate()-(chartData.length-1-i))
+    ctx.fillText(`${d.getDate()}.${d.getMonth()+1}.`,xP(i)-10,H-7)
+  })
+}
+
+// ── Last Tour Analysis ─────────────────────
+async function startAnalysis(stravaId){
+  const box=$('lastTourAnalysis'),btn=$('analyzeLastBtn')
+  if(!stravaId){ showToast('Keine Tour verfügbar','error'); return }
+  btn.disabled=true; btn.querySelector('svg')?.remove()
+  const oldHtml=btn.innerHTML; btn.innerHTML='<span class="spin">↻</span> Analysiere…'
+  box.innerHTML='<span style="color:var(--text3)">Claude analysiert deine letzte Tour…</span>'
+  try{
+    const d=await api('/coach/analyze',{method:'POST',body:JSON.stringify({activity_id:stravaId,model:chatModel})});
+    box.style.color='var(--text2)'; box.innerHTML=d.analysis?renderMarkdown(d.analysis):'Keine Analyse erhalten.'
+  }catch(e){ box.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>` }
+  finally{ btn.disabled=false; btn.innerHTML=oldHtml }
+}
+
+// ── Activities ─────────────────────────────
+async function loadActivities(){
+  const el=$('all-acts');
+  try{
+    const d=await api('/activities?limit=200');
+    activities=d.activities||[];
+    $('actsCountLabel').textContent=`Alle Touren · ${activities.length} gesamt`;
+    const totalKm=activities.reduce((s,a)=>s+(a.distance_km||0),0);
+    if($('totalKmBadge')) $('totalKmBadge').textContent=`${Math.round(totalKm*10)/10} km gesamt`;
+    if(!activities.length){
+      el.innerHTML='<div style="padding:28px;text-align:center;color:var(--text3);font-size:13px">Noch keine Aktivitäten in D1. Verbinde Strava und starte einen Sync.</div>';
+      return;
+    }
+    el.innerHTML='';
+    activities.forEach(a=>el.appendChild(buildActRow(a)));
+  }catch(e){
+    el.innerHTML='<div style="padding:28px;text-align:center;color:var(--text3);font-size:13px">Aktivitäten konnten nicht geladen werden.</div>';
+    if(connected) showToast(e.message,'error');
+  }
+}
+
+function filterTours(){
+  const q=($('tourSearch')?.value||'').toLowerCase();
+  const minKm=parseFloat($('filterMinKm')?.value||'')||0;
+  const maxKm=parseFloat($('filterMaxKm')?.value||'')||Infinity;
+  const filtered=activities.filter(a=>{
+    const nameMatch=(a.name||'').toLowerCase().includes(q);
+    const kmMatch=(a.distance_km||0)>=minKm&&(a.distance_km||0)<=maxKm;
+    return nameMatch&&kmMatch;
+  });
+  const el=$('all-acts'); if(!el) return;
+  el.innerHTML='';
+  filtered.forEach(a=>el.appendChild(buildActRow(a)));
+  const totalKm=filtered.reduce((s,a)=>s+(a.distance_km||0),0);
+  if($('filterInfo')) $('filterInfo').textContent=filtered.length<activities.length?`${filtered.length} von ${activities.length} Touren`:'';
+  if($('totalKmBadge')) $('totalKmBadge').textContent=`${Math.round(totalKm*10)/10} km gesamt`;
+  $('actsCountLabel').textContent=filtered.length<activities.length?`Touren · ${filtered.length} gefiltert`:`Alle Touren · ${activities.length} gesamt`;
+}
+function buildActRow(a) {
+  const d=document.createElement('div'); d.className='act-row'
+  const id=a.strava_id;
+  d.innerHTML=`
+    <div class="act-header" onclick="toggleAct(${id})">
+      <div><div class="act-name">${esc(a.name)}</div><div class="act-date">${fmtDate(a.date)}</div></div>
+      <div class="act-metric" style="color:var(--accent)">${a.distance_km??0} km</div>
+      <div class="act-metric" style="color:var(--purple)">${a.moving_time_s?formatTime(a.moving_time_s):'–'}</div>
+      <div class="act-metric" style="color:var(--cyan)">${a.elevation_m??0} m</div>
+      <div class="act-metric" style="color:var(--red)">${a.avg_hr??'–'} bpm</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-primary" style="font-size:11px;padding:6px 12px" onclick="event.stopPropagation();analyzeAct(${id})" id="analyze-btn-${id}">KI-Analyse</button>
+      </div>
+      <span style="color:var(--text3);font-size:14px;font-weight:700" id="chevron-${id}">▾</span>
+    </div>
+    <div class="act-body" id="act-body-${id}" style="display:none">
+      <div id="act-content-${id}" style="font-size:13px;color:var(--text3)">Klicke auf „KI-Analyse" um eine Coaching-Analyse zu starten.</div>
+    </div>`
+  return d
+}
+function toggleAct(id){
+  const b=document.getElementById('act-body-'+id),c=document.getElementById('chevron-'+id)
+  const o=b.style.display!=='none'; b.style.display=o?'none':''; c.textContent=o?'▾':'▴'
+}
+async function analyzeAct(id){
+  const body=document.getElementById('act-body-'+id)
+  const cont=document.getElementById('act-content-'+id)
+  const btn=document.getElementById('analyze-btn-'+id)
+  body.style.display=''; document.getElementById('chevron-'+id).textContent='▴'
+  btn.disabled=true; btn.textContent='Analysiere…'
+  cont.style.color='var(--text3)'; cont.textContent='Claude analysiert deine Tour…'
+  try{
+    const d=await api('/coach/analyze',{method:'POST',body:JSON.stringify({activity_id:id,model:chatModel})});
+    cont.style.color='var(--text2)'
+    cont.innerHTML=d.analysis?renderMarkdown(d.analysis):'Keine Analyse erhalten.'
+  }catch(e){
+    cont.style.color='var(--red)'; cont.textContent=e.message
+  }finally{
+    btn.disabled=false; btn.textContent='KI-Analyse'
+  }
+}
+
+// ── Chat ───────────────────────────────────
+let chatModel='haiku'
+function setModel(m){
+  chatModel=m
+  document.querySelectorAll('.model-btn').forEach(b=>b.classList.remove('active'))
+  document.getElementById('btn-'+m).classList.add('active')
+}
+function addMsg(role,text){
+  chatHistory.push({role:role==='user'?'user':'assistant',content:text});
+  const wrap=document.getElementById('chatMsgs')
+  const div=document.createElement('div')
+  div.style.cssText=`display:flex;gap:10px;flex-direction:${role==='user'?'row-reverse':'row'};animation:fadeUp .25s ease`
+  const isUser=role==='user'
+  const avBg=isUser?'var(--surface2)':'var(--accent)'
+  const avLabel=isUser?'F':'◈'
+  const bubbleBorder=isUser?'var(--accent)':'var(--border2)'
+  const br=isUser?'12px 4px 12px 12px':'4px 12px 12px 12px'
+  const bodyHtml = isUser ? esc(text) : renderMarkdown(text)
+  div.innerHTML=`<div style="width:30px;height:30px;border-radius:6px;background:${avBg};border:1px solid ${isUser?'var(--border2)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:700;color:#fff">${avLabel}</div>
+    <div style="max-width:80%;background:var(--surface2);border:1px solid ${bubbleBorder};border-radius:${br};padding:11px 14px;font-size:13px;line-height:1.75;color:var(--text2);${isUser?'white-space:pre-wrap':''}">${bodyHtml}</div>`
+  wrap.appendChild(div); wrap.scrollTop=wrap.scrollHeight
+}
+function addTyping(){
+  const wrap=document.getElementById('chatMsgs')
+  const div=document.createElement('div'); div.id='typing'; div.style.cssText='display:flex;gap:10px'
+  div.innerHTML=`<div style="width:30px;height:30px;border-radius:6px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;color:#fff">◈</div>
+    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:4px 12px 12px 12px;padding:12px 16px;display:flex;gap:5px;align-items:center">
+      ${[0,1,2].map(i=>`<div style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:bounce 1.2s ${i*.2}s infinite"></div>`).join('')}
+    </div>`
+  wrap.appendChild(div); wrap.scrollTop=wrap.scrollHeight
+}
+function sendQuick(btn){sendMsg(btn.textContent)}
+function sendChat(){const i=document.getElementById('chatInput'),t=i.value.trim();if(!t)return;i.value='';sendMsg(t)}
+async function sendMsg(txt){
+  addMsg('user',txt); addTyping()
+  try{
+    const priorHistory=chatHistory.slice(0,-1);
+    const d=await api('/coach/chat',{method:'POST',body:JSON.stringify({message:txt,history:priorHistory,model:chatModel})});
+    const t=document.getElementById('typing');if(t)t.remove()
+    addMsg('assistant',d.reply||'Keine Antwort erhalten.')
+    if(d.goal_saved){
+      renderActiveGoal(d.goal||null);
+      await loadDashboard();
+    }
+  }catch(e){
+    const t=document.getElementById('typing');if(t)t.remove()
+    addMsg('assistant','Fehler: '+e.message)
+  }
+}
+
+// ── Health / HR ────────────────────────────
+async function loadHr(){
+  try{
+    const d=await api('/health/hr');
+    const a=(d.entries||[]);
+    if(!a.length){
+      $('hrTableBody').innerHTML='<tr><td colspan="3" style="color:var(--text3);text-align:center;padding:20px">Noch keine Ruhepulsdaten gespeichert.</td></tr>';
+      $('hrCurrent').textContent='–'; $('hrAvg').textContent='–'; $('hrTrend').textContent='–'; $('hrTrendSub').innerHTML='&nbsp;';
+      drawHrChart([]);
+      return;
+    }
+    // entries assumed sorted; make sure newest first for table, oldest->newest for chart
+    const sorted=a.slice().sort((x,y)=>new Date(y.date)-new Date(x.date));
+    $('hrTableBody').innerHTML=sorted.slice(0,10).map(x=>{
+      const c=x.resting_hr>52?'var(--orange)':'var(--red)';
+      const bg=x.resting_hr>52?'rgba(249,115,22,.12)':'rgba(239,68,68,.12)';
+      return `<tr><td>${fmtDate(x.date)}</td><td><span class="badge" style="background:${bg};color:${c}">${x.resting_hr} bpm</span></td><td>${esc(x.note||'—')}</td></tr>`;
+    }).join('');
+    $('hrCurrent').textContent=sorted[0].resting_hr;
+    const last30=sorted.slice(0,30);
+    const avg=last30.reduce((s,x)=>s+Number(x.resting_hr||0),0)/last30.length;
+    $('hrAvg').textContent=Math.round(avg);
+    if(sorted.length>1){
+      const diff=sorted[0].resting_hr-sorted[1].resting_hr;
+      $('hrTrend').textContent=(diff<=0?'▼':'▲')+Math.abs(diff);
+      $('hrTrend').style.color=diff<=0?'var(--green)':'var(--red)';
+      $('hrTrendSub').textContent=diff<=0?'besser':'höher';
+    }
+    drawHrChart(sorted.slice().reverse());
+  }catch(e){ /* silent, HR is optional */ }
+}
+async function saveHr(){
+  try{
+    const val=$('hrValue').value, date=$('hrDate').value||dateToday(), note=$('hrNote').value;
+    if(!val){ showToast('Ruhepuls eingeben','error'); return }
+    await api('/health/hr',{method:'POST',body:JSON.stringify({date,resting_hr:Number(val),note})});
+    $('hrValue').value=''; $('hrNote').value='';
+    showToast(`Ruhepuls ${val} bpm gespeichert`);
+    loadHr();
+  }catch(e){ showToast(e.message,'error') }
+}
+function drawHrChart(entries){
+  const canvas=document.getElementById('hrChart'); if(!canvas) return
+  const W=canvas.offsetWidth||400; canvas.width=W; canvas.height=120
+  const ctx=canvas.getContext('2d')
+  ctx.clearRect(0,0,W,120)
+  const data=(entries&&entries.length)?entries.slice(-7):[];
+  if(!data.length){
+    ctx.fillStyle='#9ca3af'; ctx.font='12px Inter,sans-serif';
+    ctx.fillText('Noch keine Ruhepulsdaten',W/2-80,60);
+    return;
+  }
+  const hr=data.map(x=>Number(x.resting_hr)), lbl=data.map(x=>fmtDate(x.date).slice(0,5))
+  const p={l:30,r:10,t:8,b:22},cW=W-p.l-p.r,cH=120-p.t-p.b
+  const mn=Math.min(...hr)-3,mx=Math.max(...hr)+3,rng=(mx-mn)||1
+  const xP=i=>p.l+(hr.length>1?(i/(hr.length-1))*cW:cW/2), yP=v=>p.t+cH-((v-mn)/rng)*cH
+
+  ctx.strokeStyle='#dde2ef'; ctx.lineWidth=1
+  for(let v=Math.ceil(mn/5)*5;v<=mx;v+=5){
+    const y=yP(v); ctx.beginPath(); ctx.moveTo(p.l,y); ctx.lineTo(p.l+cW,y); ctx.stroke()
+    ctx.fillStyle='#6b7280'; ctx.font='10px Inter,sans-serif'; ctx.fillText(v,2,y+3)
+  }
+  const gr=ctx.createLinearGradient(0,p.t,0,p.t+cH)
+  gr.addColorStop(0,'rgba(239,68,68,.2)'); gr.addColorStop(1,'rgba(239,68,68,.02)')
+  ctx.fillStyle=gr; ctx.beginPath()
+  hr.forEach((v,i)=>i===0?ctx.moveTo(xP(i),yP(v)):ctx.lineTo(xP(i),yP(v)))
+  ctx.lineTo(xP(hr.length-1),p.t+cH); ctx.lineTo(xP(0),p.t+cH); ctx.closePath(); ctx.fill()
+  ctx.strokeStyle='#ef4444'; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.beginPath()
+  hr.forEach((v,i)=>i===0?ctx.moveTo(xP(i),yP(v)):ctx.lineTo(xP(i),yP(v))); ctx.stroke()
+  hr.forEach((v,i)=>{
+    ctx.fillStyle='var(--surface)'; ctx.beginPath(); ctx.arc(xP(i),yP(v),3.5,0,Math.PI*2); ctx.fill()
+    ctx.strokeStyle='#ef4444'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(xP(i),yP(v),3.5,0,Math.PI*2); ctx.stroke()
+    ctx.fillStyle='#6b7280'; ctx.font='10px Inter,sans-serif'; ctx.fillText(lbl[i],xP(i)-10,120-5)
+  })
+}
+
+// ── Bike ───────────────────────────────────
+async function loadBike(){
+  try{
+    const d=await api('/bike');
+    activeBikeData=d.active||null;
+    archivedBikesData=d.archived||[];
+    maintLog=d.maintenance||[];
+
+    if(activeBikeData){
+      const kmTotal=Number(activeBikeData.km_total||0);
+      $('activeBikeName').textContent=activeBikeData.name;
+      $('activeBikeType').textContent=`${activeBikeData.type||'Bike'} · Gekauft ${activeBikeData.year||'–'}`;
+      $('activeBikeKm').textContent=`${kmTotal.toLocaleString('de-DE')} km gesamt`;
+      $('modalOldBike').textContent=activeBikeData.name;
+
+      // next maintenance = smallest remaining interval (Basislinie berücksichtigt)
+      let best=null;
+      MAINT_DEF.forEach(m=>{
+        const last=findMaintBaseline(m)
+        const baseline=last?Number(last.km_at_time):0
+        const since=Math.max(0,kmTotal-baseline)
+        const rem=m.interval-since;
+        if(best===null||rem<best.rem) best={rem,label:m.key,interval:m.interval};
+      });
+      if(best){
+        $('nextMaintKm').textContent=best.rem>0?`${Math.round(best.rem).toLocaleString('de-DE')} km`:'Fällig!';
+        $('nextMaintLabel').textContent=`${best.label} fällig bei ${best.interval.toLocaleString('de-DE')} km`;
+      }
+    } else {
+      $('activeBikeName').textContent='Kein Rad hinterlegt';
+      $('activeBikeType').textContent='Lege dein erstes Rad an';
+      $('activeBikeKm').textContent='0 km gesamt';
+    }
+
+    renderMaint();
+    renderClean();
+    renderArchive();
+    renderLog();
+  }catch(e){ showToast(e.message,'error') }
+}
+
+function renderMaint() {
+  const el=document.getElementById('maintList'); if(!el) return
+  const kmTotal=Number(activeBikeData?.km_total||0);
+  el.innerHTML=''
+  MAINT_DEF.forEach(m=>{
+    const last=findMaintBaseline(m)
+    const baseline=last?Number(last.km_at_time):0
+    const since=Math.max(0,kmTotal-baseline)
+    const pct=Math.min(100,Math.round(since/m.interval*100))
+    const rem=Math.round((m.interval-since)*10)/10
+    const warn=pct>80
+    const d=document.createElement('div'); d.className='maint-row'
+    d.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:600;font-size:13px;color:var(--text)">${m.key}</div>
+        <div style="font-size:11px;font-weight:700;color:${warn?'var(--red)':'var(--text3)'}">${rem>0?`${rem.toLocaleString('de-DE')} km verbleibend`:'Fällig!'}</div>
+      </div>
+      <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${warn?'var(--red)':m.color}"></div></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:5px;font-weight:600">${since.toLocaleString('de-DE')} / ${m.interval.toLocaleString('de-DE')} km · ${pct}%${last?` · zuletzt ${fmtDate(last.date)} bei ${baseline.toLocaleString('de-DE')} km`:''}</div>`
+    el.appendChild(d)
+  })
+}
+
+function renderClean() {
+  const el=document.getElementById('cleanList'); if(!el) return
+  el.innerHTML=''
+  const byDesc={};
+  maintLog.forEach(x=>{const k=(x.description||'').toLowerCase(); if(!byDesc[k]||new Date(x.date)>new Date(byDesc[k])) byDesc[k]=x.date;});
+  const today=dateToday();
+  CLEAN_DEF.forEach(c=>{
+    const last=byDesc[c.label.toLowerCase()];
+    const days=last?Math.max(0,daysBetween(last,today)):null;
+    const warn=days==null?true:days>=c.warnDays;
+    const div=document.createElement('div')
+    div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)'
+    div.innerHTML=`
+      <div style="font-size:13px;font-weight:600;color:var(--text2)">${c.label}</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:${warn?'var(--red)':'var(--text3)'}">${days==null?'noch nie':'vor '+days+' Tagen'}</span>
+        <span class="badge" style="background:${warn?'rgba(239,68,68,.1)':'rgba(34,197,94,.1)'};color:${warn?'var(--red)':'var(--green)'};border:1px solid ${warn?'rgba(239,68,68,.2)':'rgba(34,197,94,.2)'}">${warn?'Überfällig':'OK'}</span>
+      </div>`
+    el.appendChild(div)
+  })
+}
+async function markClean(key){
+  const c=CLEAN_DEF.find(x=>x.key===key); if(!c) return;
+  try{
+    await api('/bike/maintenance',{method:'POST',body:JSON.stringify({date:dateToday(),description:c.label,km_at_time:null})});
+    showToast('Als erledigt markiert');
+    loadBike();
+  }catch(e){ showToast(e.message,'error') }
+}
+
+function renderLog(){
+  const el=document.getElementById('logTableBody'); if(!el) return
+  if(!maintLog.length){
+    el.innerHTML='<tr><td colspan="4" style="color:var(--text3);text-align:center;padding:20px">Noch keine Wartungseinträge.</td></tr>'
+    return
+  }
+  const sorted=maintLog.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  el.innerHTML=sorted.map(x=>`<tr id="maint-row-${x.id}">
+    <td>${fmtDate(x.date)}</td>
+    <td>${x.km_at_time!=null?`<span style="color:var(--accent);font-weight:700;font-family:'Barlow Condensed',sans-serif;font-size:15px">${Number(x.km_at_time).toLocaleString('de-DE')} km</span>`:'–'}</td>
+    <td>${esc(x.description)}</td>
+    <td style="white-space:nowrap;text-align:right">
+      <button class="btn btn-ghost" style="font-size:11px;padding:4px 9px" onclick="editMaintRow(${x.id})">✎</button>
+      <button class="btn btn-ghost" style="font-size:11px;padding:4px 9px;margin-left:4px" onclick="deleteMaintRow(${x.id})">🗑</button>
+    </td>
+  </tr>`).join('');
+}
+
+function editMaintRow(id){
+  const x=maintLog.find(m=>m.id===id); if(!x) return;
+  const row=document.getElementById('maint-row-'+id); if(!row) return;
+  row.innerHTML=`
+    <td><input type="date" class="field" id="edit-date-${id}" value="${(x.date||'').slice(0,10)}" style="padding:6px 8px"/></td>
+    <td><input type="number" class="field" id="edit-km-${id}" value="${x.km_at_time??''}" style="padding:6px 8px;width:100px"/></td>
+    <td><input type="text" class="field" id="edit-desc-${id}" value="${esc(x.description)}" style="padding:6px 8px"/></td>
+    <td style="white-space:nowrap;text-align:right">
+      <button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="saveMaintEdit(${id})">✓</button>
+      <button class="btn btn-ghost" style="font-size:11px;padding:4px 9px;margin-left:4px" onclick="renderLog()">✕</button>
+    </td>`;
+}
+
+async function saveMaintEdit(id){
+  try{
+    const date=document.getElementById('edit-date-'+id).value;
+    const km=document.getElementById('edit-km-'+id).value;
+    const desc=document.getElementById('edit-desc-'+id).value.trim();
+    if(!desc){ showToast('Maßnahme darf nicht leer sein','error'); return }
+    await api('/bike/maintenance/'+id,{method:'PUT',body:JSON.stringify({date,description:desc,km_at_time:km?Number(km):null})});
+    showToast('Eintrag aktualisiert');
+    loadBike();
+  }catch(e){ showToast(e.message,'error') }
+}
+
+async function deleteMaintRow(id){
+  if(!confirm('Diesen Wartungseintrag wirklich löschen?')) return;
+  try{
+    await api('/bike/maintenance/'+id,{method:'DELETE'});
+    showToast('Eintrag gelöscht');
+    loadBike();
+  }catch(e){ showToast(e.message,'error') }
+}
+function toggleLogForm(){const f=document.getElementById('logForm');f.style.display=f.style.display==='none'?'':'none'}
+async function saveLog(){
+  try{
+    const date=document.getElementById('logDate').value||dateToday(), km=document.getElementById('logKm').value
+    const desc=document.getElementById('logDesc').value.trim(); if(!desc){showToast('Maßnahme beschreiben','error');return}
+    await api('/bike/maintenance',{method:'POST',body:JSON.stringify({date,description:desc,km_at_time:km?Number(km):null})});
+    showToast('Wartungseintrag gespeichert');
+    document.getElementById('logDesc').value=''; document.getElementById('logKm').value='';
+    toggleLogForm();
+    loadBike();
+  }catch(e){ showToast(e.message,'error') }
+}
+
+function renderArchive() {
+  const el=document.getElementById('bikeArchive'); if(!el) return
+  const cnt=document.getElementById('archiveCount')
+  if(cnt) cnt.textContent=`${archivedBikesData.length} archivierte${archivedBikesData.length===1?'s':''} Rad${archivedBikesData.length!==1?'räder':''}`
+  el.innerHTML=''
+  if(!archivedBikesData.length){
+    el.innerHTML='<div style="padding:28px;text-align:center;color:var(--text3);font-size:13px">Noch kein Rad archiviert.</div>'
+    return
+  }
+  archivedBikesData.forEach((b)=>{
+    const d=document.createElement('div'); d.className='archive-card'
+    d.innerHTML=`
+      <div style="font-size:28px">🚲</div>
+      <div style="flex:1">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--text2)">${esc(b.name)}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">${esc(b.type||'Bike')} · ${b.year||'–'}</div>
+        <div style="margin-top:6px"><span class="badge" style="background:var(--surface);color:var(--text3);border:1px solid var(--border)">${Number(b.km_total||0).toLocaleString('de-DE')} km</span></div>
+      </div>
+      <button class="btn btn-ghost" onclick="restoreBike(${b.id})" style="font-size:11px;padding:6px 12px">↩ Reaktivieren</button>
+      <button class="btn btn-ghost" onclick="deleteBike(${b.id},'${esc(b.name).replace(/'/g,"\\'")}')" style="font-size:11px;padding:6px 12px;margin-left:6px;color:var(--red);border-color:rgba(239,68,68,.3)">🗑 Löschen</button>`
+    el.appendChild(d)
+  })
+}
+
+async function restoreBike(id){
+  try{
+    await api('/bike/'+id+'/reactivate',{method:'POST'});
+    showToast('Bike reaktiviert');
+    loadBike();
+  }catch(e){ showToast(e.message,'error') }
+}
+
+async function deleteBike(id,name){
+  if(!confirm(`"${name}" wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden (inkl. Wartungslog dieses Rads).`)) return;
+  try{
+    await api('/bike/'+id,{method:'DELETE'});
+    showToast('Bike gelöscht');
+    loadBike();
+  }catch(e){ showToast(e.message,'error') }
+}
+function openNewBikeModal(){
+  document.getElementById('newBikeName').value=''
+  document.getElementById('newBikeStartKm').value='0'
+  document.getElementById('newBikeYear').value=new Date().getFullYear()
+  document.getElementById('newBikeModal').style.display='flex'
+}
+function closeNewBikeModal(){document.getElementById('newBikeModal').style.display='none'}
+async function activateNewBike(){
+  try{
+    const name=document.getElementById('newBikeName').value.trim()
+    const type=document.getElementById('newBikeType').value
+    const year=parseInt(document.getElementById('newBikeYear').value)||new Date().getFullYear()
+    const km=parseInt(document.getElementById('newBikeStartKm').value)||0
+    if(!name){showToast('Bitte Rad-Namen eingeben','error');return}
+    await api('/bike/new',{method:'POST',body:JSON.stringify({name,type,year,start_km:km})});
+    showToast(`${name} ist jetzt aktiv`);
+    closeNewBikeModal();
+    loadBike();
+  }catch(e){ showToast(e.message,'error') }
+}
+
+// ── Toast ──────────────────────────────────
+function showToast(msg,type='ok'){
+  const el=document.getElementById('toastEl')
+  el.textContent=msg; el.style.display='flex'
+  el.style.background=type==='error'?'var(--red)':'var(--green)'
+  el.style.color='#fff'
+  setTimeout(()=>el.style.display='none',3200)
+}
+
+// ── Init ───────────────────────────────────
+document.getElementById('hrDate') && (document.getElementById('hrDate').value=dateToday());
+document.getElementById('logDate') && (document.getElementById('logDate').value=dateToday());
+
+window.addEventListener('resize',()=>{drawLoadChart();drawHrChart(null)})
+
+const _params=new URLSearchParams(location.search);
+if(_params.get('error')) showToast('Strava-Verbindung fehlgeschlagen: '+_params.get('error'),'error');
+if(_params.get('connected')) history.replaceState({},'',location.pathname);
+
+initAuth();
+// Init fuel calculator when its tab becomes visible
+const _origSwitchTab = switchTab;
+switchTab = function(id, btn) {
+  _origSwitchTab(id, btn);
+  if (id === 'fuel') {
+    fcLoadProductsFromApi().then(() => { fcCalculate(); });
+  }
+};
+
+// ══════════════════════════════════════════════════
+// FUEL CALCULATOR
+// ══════════════════════════════════════════════════
+
+// ── Fuel sub-tab ───────────────────────────────────
+function fuelSubTab(id, btn) {
+  ['rechner','bestand'].forEach(p => {
+    const el = document.getElementById('fuel-panel-' + p);
+    if (el) el.style.display = p === id ? '' : 'none';
+  });
+  document.querySelectorAll('#tab-fuel .tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (id === 'bestand') fcRenderStock();
+}
+
+// ── State ──────────────────────────────────────────
+const FC_INTENSITY = {
+  endurance: { carbs: 35, label: '35 g/h' },
+  tempo:     { carbs: 70, label: '70 g/h' },
+  race:      { carbs: 105, label: '105 g/h' },
+};
+let fcIntensity   = 'endurance';
+let fcSteps       = 4;
+let fcTargetCarbs = 0;
+let fcPackQty     = {};
+let fcProducts    = []; // in-memory cache
+
+// ── Slider / Intensity ─────────────────────────────
+function fcOnSlider() {
+  fcSteps = parseInt(document.getElementById('fcDurationSlider').value);
+  fcCalculate();
+}
+function fcSetIntensity(key, btn) {
+  fcIntensity = key;
+  document.querySelectorAll('.int-btn').forEach(b => b.classList.remove('int-active'));
+  btn.classList.add('int-active');
+  fcCalculate();
+}
+
+// ── Calculate ──────────────────────────────────────
+function fcCalculate() {
+  const minutes = fcSteps * 30;
+  const hours   = minutes / 60;
+  const def     = FC_INTENSITY[fcIntensity];
+
+  fcTargetCarbs = Math.round(hours * def.carbs);
+  const totalMl = Math.round(hours * 600);
+  const liters  = (totalMl / 1000).toFixed(1);
+  const bottles = Math.ceil(totalMl / 750);
+
+  const h = Math.floor(minutes / 60), m = minutes % 60;
+  const dur = document.getElementById('fcDurationDisplay');
+  if (!dur) return;
+  if      (h === 0) dur.innerHTML = `${m}<span> min</span>`;
+  else if (m === 0) dur.innerHTML = `${h}<span> h</span>`;
+  else              dur.innerHTML = `${h}<span> h </span>${m}<span style="font-size:45%;color:var(--text3);font-weight:400"> min</span>`;
+
+  document.getElementById('fcCarbsVal').innerHTML      = `${fcTargetCarbs}<span class="unit">g</span>`;
+  document.getElementById('fcCarbsRate').textContent    = def.label;
+  document.getElementById('fcHydrationVal').innerHTML   = `${liters}<span class="unit">L</span>`;
+  document.getElementById('fcHydrationBottles').textContent = `ca. ${bottles} Flasche${bottles !== 1 ? 'n' : ''} à 750 ml`;
+  document.getElementById('fcEatTiming').textContent    = fcIntensity === 'race' ? 'Alle 15–20 Min.' : 'Alle 20–30 Min.';
+
+  let hint;
+  if      (minutes < 60)   hint = '<strong>Kurze Tour.</strong> Wasser reicht meistens völlig aus.';
+  else if (minutes <= 90)  hint = '<strong>Mittlere Tour.</strong> Wasser ist die Basis. Kohlenhydrate sind bei hoher Intensität sinnvoll.';
+  else if (minutes <= 180) hint = '<strong>Längere Tour.</strong> Starte nach 30–45 Minuten mit regelmäßiger Kohlenhydratzufuhr.';
+  else                     hint = '<strong>Lange Tour.</strong> Kohlenhydrate und Flüssigkeit konsequent ab Minute 30 zuführen.';
+  if (fcIntensity === 'race') hint += ' <strong>Hinweis:</strong> Hohe Mengen (>90 g/h) bitte vorher im Training testen.';
+  document.getElementById('fcHintBox').innerHTML = hint;
+
+  ['fcCarbsVal','fcHydrationVal','fcHintBox'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('fc-updated'); void el.offsetWidth; el.classList.add('fc-updated');
+  });
+
+  fcRenderPacklist();
+}
+
+// ── API helpers ───────────────────────────────────
+async function fcLoadProductsFromApi() {
+  try {
+    const d = await api('/fuel/products');
+    fcProducts = (d.products || []).map(p => ({
+      id:    String(p.id),
+      name:  p.name,
+      cat:   p.category,
+      carbs: p.carbs_per_unit,
+      qty:   p.stock
+    }));
+  } catch(e) { /* silent */ }
+}
+
+// ── Packliste ─────────────────────────────────────
+function fcRenderPacklist() {
+  const container = document.getElementById('fcPackList');
+  const summary   = document.getElementById('fcPackSummary');
+  if (!container) return;
+
+  if (!fcProducts.length) {
+    container.innerHTML = '<div class="pack-empty">Noch keine Produkte im Bestand — wechsle zum Tab <strong>Bestand</strong> und lege sie an.</div>';
+    if (summary) summary.style.display = 'none';
+    return;
+  }
+
+  fcProducts.forEach(p => { if (fcPackQty[p.id] === undefined) fcPackQty[p.id] = 0; });
+
+  const totalPacked = fcProducts.reduce((s, p) => s + (fcPackQty[p.id] || 0) * (p.carbs || 0), 0);
+  if (totalPacked === 0 && fcTargetCarbs > 0) fcAutoSuggest();
+
+  let html = '<div class="pack-list">';
+  fcProducts.forEach(p => {
+    const qty = fcPackQty[p.id] || 0;
+    let label, cls;
+    if (qty === 0)        { label = `${p.qty} im Lager`; cls = 'ok'; }
+    else if (qty > p.qty) { label = `Nur ${p.qty} im Lager!`; cls = 'out'; }
+    else { const rem = p.qty - qty; label = `${rem} übrig`; cls = rem < 2 ? 'low' : 'ok'; }
+    const icon = { gel:'🟡', mus:'🍎', drink:'💧', other:'📦' }[p.cat] || '📦';
+    html += `
+      <div class="pack-item">
+        <div>
+          <div class="pack-item-name">${icon} ${fcEsc(p.name)}</div>
+          <div class="pack-item-detail">${p.carbs} g KH pro Portion · ${p.cat === 'drink' ? 'Getränk' : 'Snack'}</div>
+        </div>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="fcChangeQty('${p.id}',-1)">−</button>
+          <div class="qty-val">${qty}</div>
+          <button class="qty-btn" onclick="fcChangeQty('${p.id}',+1)">+</button>
+        </div>
+        <span class="pack-stock ${cls}">${label}</span>
+      </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+
+  const packed  = fcProducts.reduce((s, p) => s + (fcPackQty[p.id] || 0) * (p.carbs || 0), 0);
+  const diff    = packed - fcTargetCarbs;
+  const diffStr = diff >= 0
+    ? `<span style="color:var(--green)">+${diff} g über Bedarf ✓</span>`
+    : `<span style="color:var(--red)">${diff} g unter Bedarf — pack mehr ein</span>`;
+  const confirmWrap = document.getElementById('fcConfirmWrap');
+  if (confirmWrap) confirmWrap.style.display = packed > 0 ? 'block' : 'none';
+  if (summary) {
+    summary.style.display = 'block';
+    summary.innerHTML = `<strong>Eingepackt:</strong> ${packed} g KH &nbsp;·&nbsp; <strong>Bedarf:</strong> ${fcTargetCarbs} g KH &nbsp;·&nbsp; ${diffStr}`;
+  }
+}
+
+function fcAutoSuggest() {
+  let remaining = fcTargetCarbs;
+  const sorted  = [...fcProducts].sort((a, b) => b.carbs - a.carbs);
+  fcProducts.forEach(p => fcPackQty[p.id] = 0);
+  for (const p of sorted) {
+    if (remaining <= 0) break;
+    const take = Math.min(Math.ceil(remaining / p.carbs), p.qty);
+    fcPackQty[p.id] = take;
+    remaining -= take * p.carbs;
+  }
+}
+
+function fcChangeQty(id, delta) {
+  fcPackQty[id] = Math.max(0, (fcPackQty[id] || 0) + delta);
+  fcRenderPacklist();
+}
+
+// ── Bestand ───────────────────────────────────────
+async function fcRenderStock() {
+  const list  = document.getElementById('fcStockList');
+  const empty = document.getElementById('fcStockEmpty');
+  if (!list) return;
+  await fcLoadProductsFromApi();
+  const catLabel = { gel:'Gel', mus:'Fruchtmus / Riegel', drink:'Getränkepulver', other:'Sonstiges' };
+  if (!fcProducts.length) {
+    list.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  list.innerHTML = fcProducts.map(p => `
+    <div class="stock-item-fc">
+      <div style="flex:1;min-width:160px">
+        <div class="stock-name-fc">${fcEsc(p.name)}</div>
+        <div class="stock-meta-fc">${catLabel[p.cat] || p.cat} · ${p.carbs} g KH pro Portion</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Bestand</span>
+        <input class="stock-qty-input" type="number" min="0" max="999"
+          value="${p.qty}" onchange="fcUpdateQty('${p.id}',this.value)" />
+        <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;border-radius:999px;color:var(--red);border-color:rgba(185,28,28,.3)"
+          onclick="fcDeleteProduct('${p.id}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+async function fcAddProduct() {
+  const name  = document.getElementById('fcNewName').value.trim();
+  const cat   = document.getElementById('fcNewCat').value;
+  const carbs = parseInt(document.getElementById('fcNewCarbs').value);
+  const qty   = parseInt(document.getElementById('fcNewQty').value);
+  if (!name)              { showToast('Bitte Namen eingeben','error'); return; }
+  if (!carbs || carbs < 1){ showToast('Bitte KH-Gehalt angeben','error'); return; }
+  if (isNaN(qty) || qty < 0) { showToast('Bitte Bestand angeben','error'); return; }
+  try {
+    await api('/fuel/products', { method:'POST', body: JSON.stringify({ name, category: cat, carbs_per_unit: carbs, stock: qty }) });
+    document.getElementById('fcNewName').value  = '';
+    document.getElementById('fcNewCarbs').value = '';
+    document.getElementById('fcNewQty').value   = '';
+    fcPackQty = {};
+    await fcRenderStock();
+    fcRenderPacklist();
+    showToast(name + ' hinzugefügt');
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+async function fcUpdateQty(id, val) {
+  const qty = Math.max(0, parseInt(val) || 0);
+  try {
+    await api('/fuel/products/' + id, { method:'PUT', body: JSON.stringify({ stock: qty }) });
+    const p = fcProducts.find(x => x.id === id);
+    if (p) { p.qty = qty; if ((fcPackQty[id]||0) > qty) fcPackQty[id] = qty; }
+    fcRenderPacklist();
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+async function fcDeleteProduct(id) {
+  if (!confirm('Produkt wirklich löschen?')) return;
+  try {
+    await api('/fuel/products/' + id, { method:'DELETE' });
+    delete fcPackQty[id];
+    await fcRenderStock();
+    fcRenderPacklist();
+    showToast('Produkt gelöscht');
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+function fcEsc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+
+// ── Confirm Pack (Bestand abbuchen) ───────────────
+async function fcConfirmPack() {
+  const items = fcProducts.filter(p => (fcPackQty[p.id] || 0) > 0);
+  if (!items.length) return;
+
+  // Optimistic UI
+  const btn = document.querySelector('#fcConfirmWrap .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Wird gespeichert…'; }
+
+  let failed = 0;
+  for (const p of items) {
+    const newStock = Math.max(0, p.qty - (fcPackQty[p.id] || 0));
+    try {
+      await api('/fuel/products/' + p.id, {
+        method: 'PUT',
+        body: JSON.stringify({ name: p.name, category: p.cat, carbs_per_unit: p.carbs, unit: 'Stück', stock: newStock })
+      });
+      p.qty = newStock;
+      fcPackQty[p.id] = 0;
+    } catch(e) { failed++; }
+  }
+
+  await fcLoadProductsFromApi();
+  fcRenderPacklist();
+  if (failed === 0) showToast("Bestand aktualisiert — lets roll!");
+  else showToast('Einige Produkte konnten nicht gespeichert werden', 'error');
+}
+</script>
+</body>
+</html>
